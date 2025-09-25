@@ -12,7 +12,9 @@ namespace td_revision.Mapper
                 .ForMember(dest => dest.NbProduits, opt => opt.MapFrom(src => src.Produits != null ? src.Produits.Count : 0));
 
             CreateMap<TypeProduitDTO, TypeProduit>()
-                .ForMember(dest => dest.Produits, opt => opt.Ignore());
+                .ForMember(dest => dest.Produits, opt => opt.Ignore())
+                .ForMember(dest => dest.IdTypeProduit, opt => opt.MapFrom(src => src.IdTypeProduit))
+                .ForMember(dest => dest.Nom, opt => opt.MapFrom(src => src.Nom));
 
             // Mapping simple pour Marque avec ReverseMap
             CreateMap<Marque, MarqueDTO>()
