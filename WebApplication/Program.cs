@@ -1,0 +1,26 @@
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using WebApplication.Models;
+using WebApplication.Services;
+
+namespace WebApplication
+{
+    public class Program
+    {
+        public static async Task Main(string[] args)
+        {
+            var builder = WebAssemblyHostBuilder.CreateDefault(args);
+            builder.RootComponents.Add<App>("#app");
+            builder.RootComponents.Add<HeadOutlet>("head::after");
+
+            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+
+            builder.Services.AddScoped<IGenericService<Produit>, WebServiceGenerique<Produit>>();
+            builder.Services.AddScoped<IGenericService<Marque>, WebServiceGenerique<Marque>>();
+            builder.Services.AddScoped<IGenericService<TypeProduit>, WebServiceGenerique<TypeProduit>>();
+            builder.Services.AddScoped<IGenericService<Image>, WebServiceGenerique<Image>>();
+
+            await builder.Build().RunAsync();
+        }
+    }
+}

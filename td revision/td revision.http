@@ -1,0 +1,6 @@
+@td_revision_HostAddress = http://localhost:5049
+
+GET {{td_revision_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
