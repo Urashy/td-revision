@@ -42,6 +42,11 @@ builder.Services.AddScoped<IDataRepository<Marque>, ManagerGenerique<Marque>>();
 builder.Services.AddScoped<IDataRepository<Produit>, ManagerGenerique<Produit>>();
 builder.Services.AddScoped<IDataRepository<TypeProduit>, ManagerGenerique<TypeProduit>>();
 
+builder.Services.AddScoped<IDataRepository<Image>, ImageManager>();
+builder.Services.AddScoped<IDataRepository<Produit>, ProduitManager>();
+builder.Services.AddScoped<IDataRepository<Marque>, MarqueManager>();
+builder.Services.AddScoped<IDataRepository<TypeProduit>, TypeProduitManager>();
+
 // builder.Services.AddScoped(typeof(IDataRepository<>), typeof(GenericManager<>));
 
 var app = builder.Build();

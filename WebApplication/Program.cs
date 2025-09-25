@@ -20,6 +20,7 @@ namespace WebApplication
             builder.Services.AddScoped<IGenericService<TypeProduit>, WebServiceGenerique<TypeProduit>>();
             builder.Services.AddScoped<IGenericService<Image>, WebServiceGenerique<Image>>();
 
+
             await builder.Build().RunAsync();
         }
     }

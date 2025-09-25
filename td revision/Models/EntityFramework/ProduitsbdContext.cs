@@ -12,6 +12,8 @@ public partial class ProduitsbdContext : DbContext
     public DbSet<Produit> Produits { get; set; }
     public DbSet<Marque> Marques { get; set; }
     public DbSet<TypeProduit> TypeProduits { get; set; }
+    public DbSet<Image> Images { get; set; }
+
     public ProduitsbdContext()
     {
     }
@@ -62,6 +64,17 @@ public partial class ProduitsbdContext : DbContext
             .HasConstraintName("FK_produits_marque");
 
 
+        });
+
+        modelBuilder.Entity<Image>(entity =>
+        {
+            entity.HasKey(e => e.IdImage);
+
+            entity.HasOne(i => i.ProduitNavigation)
+                .WithMany(p => p.Images)
+                .HasForeignKey(i => i.IdProduit)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_images_produit");
         });
 
         OnModelCreatingPartial(modelBuilder);

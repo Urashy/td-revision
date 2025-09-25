@@ -1,0 +1,595 @@
+﻿@page "/produits/ajouter"
+@inject IGenericService<Marque> WSMarque
+@inject IGenericService<Produit> WSProduit
+@inject IGenericService<TypeProduit> WSTypeProduit
+@inject IGenericService<Image> WSImage
+@inject NavigationManager Navigation
+@using WebApplication.Models
+@using WebApplication.Services
+
+<PageTitle>Ajouter un produit</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Ajouter un nouveau produit
+                    </h3>
+                </div>
+
+                <!-- Modal pour ajouter une nouvelle marque -->
+                @if (showModalAjoutMarque)
+                {
+                    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-plus-circle me-2"></i>
+                                        Ajouter une nouvelle marque
+                                    </h5>
+                                    <button type="button" class="btn-close" @onclick="FermerModalAjoutMarque"></button>
+                                </div>
+                                <div class="modal-body">
+                                    @if (!string.IsNullOrEmpty(errorMessageMarque))
+                                    {
+                                        <div class="alert alert-danger" role="alert">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            @errorMessageMarque
+                                        </div>
+                                    }
+
+                                    <div class="mb-3">
+                                        <label for="nouvelleMarque" class="form-label">
+                                            Nom de la marque <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" id="nouvelleMarque" class="form-control"
+                                               @bind="nouvelleMarque.Nom"
+                                               placeholder="Entrez le nom de la marque"
+                                               @onkeypress="@(async (e) => { if (e.Key == "Enter") await AjouterNouvelleMarque(); })" />
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" @onclick="FermerModalAjoutMarque">
+                                        Annuler
+                                    </button>
+                                    <button type="button" class="btn btn-primary" @onclick="AjouterNouvelleMarque" disabled="@isSubmittingMarque">
+                                        @if (isSubmittingMarque)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-save me-2"></i>
+                                        }
+                                        @(isSubmittingMarque ? "Ajout..." : "Ajouter")
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Modal pour ajouter un nouveau type de produit -->
+                @if (showModalAjoutType)
+                {
+                    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-plus-circle me-2"></i>
+                                        Ajouter un nouveau type de produit
+                                    </h5>
+                                    <button type="button" class="btn-close" @onclick="FermerModalAjoutType"></button>
+                                </div>
+                                <div class="modal-body">
+                                    @if (!string.IsNullOrEmpty(errorMessageType))
+                                    {
+                                        <div class="alert alert-danger" role="alert">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            @errorMessageType
+                                        </div>
+                                    }
+
+                                    <div class="mb-3">
+                                        <label for="nouveauType" class="form-label">
+                                            Nom du type de produit <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" id="nouveauType" class="form-control"
+                                               @bind="nouveauType.Nom"
+                                               placeholder="Entrez le nom du type"
+                                               @onkeypress="@(async (e) => { if (e.Key == "Enter") await AjouterNouveauType(); })" />
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" @onclick="FermerModalAjoutType">
+                                        Annuler
+                                    </button>
+                                    <button type="button" class="btn btn-primary" @onclick="AjouterNouveauType" disabled="@isSubmittingType">
+                                        @if (isSubmittingType)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-save me-2"></i>
+                                        }
+                                        @(isSubmittingType ? "Ajout..." : "Ajouter")
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @errorMessage
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            @successMessage
+                        </div>
+                    }
+
+                    <EditForm Model="@nouveauProduit" OnValidSubmit="@AjouterProduit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger mb-3" />
+
+                        <div class="row">
+                            <!-- Nom du produit -->
+                            <div class="col-md-6 mb-3">
+                                <label for="nom" class="form-label">
+                                    Nom du produit <span class="text-danger">*</span>
+                                </label>
+                                <InputText id="nom" class="form-control" @bind-Value="nouveauProduit.Nom" placeholder="Entrez le nom du produit" />
+                                <ValidationMessage For="@(() => nouveauProduit.Nom)" />
+                            </div>
+
+                            <!-- Stock -->
+                            <div class="col-md-6 mb-3">
+                                <label for="stock" class="form-label">Stock initial</label>
+                                <InputNumber id="stock" class="form-control" @bind-Value="nouveauProduit.Stock" placeholder="0" />
+                                <ValidationMessage For="@(() => nouveauProduit.Stock)" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Marque -->
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label for="marque" class="form-label mb-0">
+                                        Marque <span class="text-danger">*</span>
+                                    </label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                            @onclick="() => OuvrirModalAjoutMarque()">
+                                        <i class="fas fa-plus"></i> Nouvelle marque
+                                    </button>
+                                </div>
+                                <select id="marque" class="form-select" @bind="nouveauProduit.Marque">
+                                    <option value="">-- Sélectionnez une marque --</option>
+                                    @if (marquesDisponibles != null)
+                                    {
+                                        @foreach (var marque in marquesDisponibles)
+                                        {
+                                            <option value="@marque.Nom">@marque.Nom</option>
+                                        }
+                                    }
+                                </select>
+                                <ValidationMessage For="@(() => nouveauProduit.Marque)" />
+                            </div>
+
+                            <!-- Type de produit -->
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label for="type" class="form-label mb-0">
+                                        Type de produit <span class="text-danger">*</span>
+                                    </label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                            @onclick="() => OuvrirModalAjoutType()">
+                                        <i class="fas fa-plus"></i> Nouveau type
+                                    </button>
+                                </div>
+                                <select id="type" class="form-select" @bind="nouveauProduit.Type">
+                                    <option value="">-- Sélectionnez un type --</option>
+                                    @if (typesDisponibles != null)
+                                    {
+                                        @foreach (var type in typesDisponibles)
+                                        {
+                                            <option value="@type.Nom">@type.Nom</option>
+                                        }
+                                    }
+                                </select>
+                                <ValidationMessage For="@(() => nouveauProduit.Type)" />
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <InputTextArea id="description" class="form-control" rows="4"
+                                           @bind-Value="nouveauProduit.Description"
+                                           placeholder="Décrivez le produit..." />
+                            <ValidationMessage For="@(() => nouveauProduit.Description)" />
+                        </div>
+
+                        <!-- Section Images -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">
+                                <i class="fas fa-images me-2"></i>
+                                Images du produit
+                            </h5>
+
+                            <!-- Liste des images ajoutées -->
+                            @if (imagesAAjouter.Any())
+                            {
+                                <div class="row mb-3">
+                                    @for (int i = 0; i < imagesAAjouter.Count; i++)
+                                    {
+                                        var index = i; // Capture pour la closure
+                                        var image = imagesAAjouter[index];
+                                        <div class="col-md-4 mb-2">
+                                            <div class="card">
+                                                <div class="card-body p-2">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <small class="text-muted">Image @(index + 1)</small>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                                @onclick="() => SupprimerImage(index)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <input type="text" class="form-control form-control-sm mb-1"
+                                                               placeholder="Nom de l'image"
+                                                               @bind="image.NomImage" />
+                                                        <input type="url" class="form-control form-control-sm"
+                                                               placeholder="URL de l'image"
+                                                               @bind="image.UrlPhoto" />
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(image.UrlPhoto))
+                                                    {
+                                                        <img src="@image.UrlPhoto" alt="Aperçu"
+                                                             class="img-fluid rounded"
+                                                             style="max-height: 100px; object-fit: cover; width: 100%;"
+                                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                                                        <div style="display: none; padding: 20px; background-color: #f8f9fa; text-align: center; border-radius: 4px;">
+                                                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                            <small class="text-muted d-block">Image non accessible</small>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            <!-- Bouton ajouter image -->
+                            <button type="button" class="btn btn-outline-secondary" @onclick="AjouterNouvelleImage">
+                                <i class="fas fa-plus me-2"></i>
+                                Ajouter une image
+                            </button>
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" @onclick="Annuler">
+                                <i class="fas fa-times me-2"></i>
+                                Annuler
+                            </button>
+                            <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-save me-2"></i>
+                                }
+                                @(isSubmitting ? "Ajout en cours..." : "Ajouter le produit")
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Produit nouveauProduit = new Produit();
+    private List<Image> imagesAAjouter = new List<Image>();
+
+    private List<Marque>? marquesDisponibles;
+    private List<TypeProduit>? typesDisponibles;
+
+    private string errorMessage = "";
+    private string successMessage = "";
+    private bool isSubmitting = false;
+
+    // Variables pour les modals d'ajout de marque et type
+    private bool showModalAjoutMarque = false;
+    private bool showModalAjoutType = false;
+    private Marque nouvelleMarque = new Marque();
+    private TypeProduit nouveauType = new TypeProduit();
+    private string errorMessageMarque = "";
+    private string errorMessageType = "";
+    private bool isSubmittingMarque = false;
+    private bool isSubmittingType = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await ChargerDonneesReferences();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur lors du chargement des données : {ex.Message}";
+            Console.WriteLine($"Erreur OnInitializedAsync : {ex}");
+        }
+    }
+
+    private async Task ChargerDonneesReferences()
+    {
+        // Charger les marques
+        var marquesResponse = await WSMarque.GetAllAsync();
+        marquesDisponibles = marquesResponse?.ToList() ?? new List<Marque>();
+
+        // Charger les types de produits
+        var typesResponse = await WSTypeProduit.GetAllAsync();
+        typesDisponibles = typesResponse?.ToList() ?? new List<TypeProduit>();
+
+        Console.WriteLine($"Marques chargées : {marquesDisponibles.Count}");
+        Console.WriteLine($"Types chargés : {typesDisponibles.Count}");
+    }
+
+    #region Gestion des modals
+
+    private void OuvrirModalAjoutMarque()
+    {
+        nouvelleMarque = new Marque();
+        errorMessageMarque = "";
+        showModalAjoutMarque = true;
+        StateHasChanged();
+    }
+
+    private void FermerModalAjoutMarque()
+    {
+        showModalAjoutMarque = false;
+        nouvelleMarque = new Marque();
+        errorMessageMarque = "";
+        isSubmittingMarque = false;
+        StateHasChanged();
+    }
+
+    private void OuvrirModalAjoutType()
+    {
+        nouveauType = new TypeProduit();
+        errorMessageType = "";
+        showModalAjoutType = true;
+        StateHasChanged();
+    }
+
+    private void FermerModalAjoutType()
+    {
+        showModalAjoutType = false;
+        nouveauType = new TypeProduit();
+        errorMessageType = "";
+        isSubmittingType = false;
+        StateHasChanged();
+    }
+
+    private async Task AjouterNouvelleMarque()
+    {
+        isSubmittingMarque = true;
+        errorMessageMarque = "";
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(nouvelleMarque.Nom))
+            {
+                errorMessageMarque = "Le nom de la marque est obligatoire.";
+                return;
+            }
+
+            // Vérifier si la marque existe déjà
+            if (marquesDisponibles?.Any(m => m.Nom?.Equals(nouvelleMarque.Nom, StringComparison.OrdinalIgnoreCase) == true) == true)
+            {
+                errorMessageMarque = "Cette marque existe déjà.";
+                return;
+            }
+
+            Console.WriteLine($"Ajout de la marque : {nouvelleMarque.Nom}");
+
+            // Ajouter la marque via l'API
+            await WSMarque.AddAsync(nouvelleMarque);
+
+            // Recharger la liste des marques
+            await ChargerDonneesReferences();
+
+            // Sélectionner automatiquement la nouvelle marque
+            nouveauProduit.Marque = nouvelleMarque.Nom;
+
+            // Fermer le modal
+            FermerModalAjoutMarque();
+
+            Console.WriteLine("Marque ajoutée avec succès");
+        }
+        catch (Exception ex)
+        {
+            errorMessageMarque = $"Erreur lors de l'ajout de la marque : {ex.Message}";
+            Console.WriteLine($"Erreur AjouterNouvelleMarque : {ex}");
+        }
+        finally
+        {
+            isSubmittingMarque = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AjouterNouveauType()
+    {
+        isSubmittingType = true;
+        errorMessageType = "";
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(nouveauType.Nom))
+            {
+                errorMessageType = "Le nom du type de produit est obligatoire.";
+                return;
+            }
+
+            // Vérifier si le type existe déjà
+            if (typesDisponibles?.Any(t => t.Nom?.Equals(nouveauType.Nom, StringComparison.OrdinalIgnoreCase) == true) == true)
+            {
+                errorMessageType = "Ce type de produit existe déjà.";
+                return;
+            }
+
+            Console.WriteLine($"Ajout du type : {nouveauType.Nom}");
+
+            // Ajouter le type via l'API
+            await WSTypeProduit.AddAsync(nouveauType);
+
+            // Recharger la liste des types
+            await ChargerDonneesReferences();
+
+            // Sélectionner automatiquement le nouveau type
+            nouveauProduit.Type = nouveauType.Nom;
+
+            // Fermer le modal
+            FermerModalAjoutType();
+
+            Console.WriteLine("Type ajouté avec succès");
+        }
+        catch (Exception ex)
+        {
+            errorMessageType = $"Erreur lors de l'ajout du type : {ex.Message}";
+            Console.WriteLine($"Erreur AjouterNouveauType : {ex}");
+        }
+        finally
+        {
+            isSubmittingType = false;
+            StateHasChanged();
+        }
+    }
+
+    #endregion
+
+    private void AjouterNouvelleImage()
+    {
+        imagesAAjouter.Add(new Image
+        {
+            NomImage = "",
+            UrlPhoto = "",
+            IdProduit = 0 // Sera défini après la création du produit
+        });
+        StateHasChanged();
+    }
+
+    private void SupprimerImage(int index)
+    {
+        if (index >= 0 && index < imagesAAjouter.Count)
+        {
+            imagesAAjouter.RemoveAt(index);
+            StateHasChanged();
+        }
+    }
+
+    private async Task AjouterProduit()
+    {
+        isSubmitting = true;
+        errorMessage = "";
+        successMessage = "";
+
+        try
+        {
+            // Validation basique
+            if (string.IsNullOrWhiteSpace(nouveauProduit.Nom))
+            {
+                errorMessage = "Le nom du produit est obligatoire.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(nouveauProduit.Marque))
+            {
+                errorMessage = "La marque est obligatoire.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(nouveauProduit.Type))
+            {
+                errorMessage = "Le type de produit est obligatoire.";
+                return;
+            }
+
+            Console.WriteLine($"Tentative d'ajout du produit : {nouveauProduit.Nom}");
+
+            // Ajouter le produit
+            await WSProduit.AddAsync(nouveauProduit);
+
+            Console.WriteLine("Produit ajouté avec succès");
+
+            // Récupérer le produit créé pour obtenir son ID
+            var produitCree = await WSProduit.GetByNameAsync(nouveauProduit.Nom);
+
+            if (produitCree != null)
+            {
+                Console.WriteLine($"Produit créé avec ID : {produitCree.Id}");
+
+                // Ajouter les images si il y en a
+                foreach (var image in imagesAAjouter.Where(img => !string.IsNullOrEmpty(img.NomImage) && !string.IsNullOrEmpty(img.UrlPhoto)))
+                {
+                    try
+                    {
+                        image.IdProduit = produitCree.Id;
+                        await WSImage.AddAsync(image);
+                        Console.WriteLine($"Image ajoutée : {image.NomImage}");
+                    }
+                    catch (Exception imgEx)
+                    {
+                        Console.WriteLine($"Erreur lors de l'ajout de l'image {image.NomImage} : {imgEx.Message}");
+                        // On continue même si une image échoue
+                    }
+                }
+
+                successMessage = $"Le produit '{nouveauProduit.Nom}' a été ajouté avec succès !";
+
+                // Optionnel : rediriger après un délai
+                await Task.Delay(2000);
+                Navigation.NavigateTo("/produits");
+            }
+            else
+            {
+                errorMessage = "Le produit a été créé mais impossible de récupérer son ID pour ajouter les images.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur lors de l'ajout du produit : {ex.Message}";
+            Console.WriteLine($"Erreur AjouterProduit : {ex}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Annuler()
+    {
+        Navigation.NavigateTo("/produits");
+    }
+}
