@@ -11,8 +11,8 @@ using td_revision.Models.EntityFramework;
 namespace td_revision.Migrations
 {
     [DbContext(typeof(ProduitsbdContext))]
-    [Migration("20250923142813_maj_produit_fk")]
-    partial class maj_produit_fk
+    [Migration("20250926092354_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,6 +23,35 @@ namespace td_revision.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("td_revision.Models.Image", b =>
+                {
+                    b.Property<int>("IdImage")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("idimage");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdImage"));
+
+                    b.Property<int>("IdProduit")
+                        .HasColumnType("integer")
+                        .HasColumnName("idproduit");
+
+                    b.Property<string>("NomImage")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nom");
+
+                    b.Property<string>("UrlPhoto")
+                        .HasColumnType("text")
+                        .HasColumnName("urlphoto");
+
+                    b.HasKey("IdImage");
+
+                    b.HasIndex("IdProduit");
+
+                    b.ToTable("image");
+                });
 
             modelBuilder.Entity("td_revision.Models.Marque", b =>
                 {
@@ -69,25 +98,17 @@ namespace td_revision.Migrations
                         .HasColumnType("text")
                         .HasColumnName("nom");
 
-                    b.Property<string>("NomPhoto")
-                        .HasColumnType("text")
-                        .HasColumnName("nomPhoto");
-
                     b.Property<int?>("StockMaxi")
                         .HasColumnType("integer")
-                        .HasColumnName("StockMaxi");
+                        .HasColumnName("stockmaxi");
 
                     b.Property<int?>("StockMini")
                         .HasColumnType("integer")
-                        .HasColumnName("stockMini");
+                        .HasColumnName("stockmini");
 
                     b.Property<int?>("StockReel")
                         .HasColumnType("integer")
-                        .HasColumnName("stockReel");
-
-                    b.Property<string>("UrlPhoto")
-                        .HasColumnType("text")
-                        .HasColumnName("UrlPhoto");
+                        .HasColumnName("stockreel");
 
                     b.HasKey("IdProduit");
 
@@ -117,6 +138,17 @@ namespace td_revision.Migrations
                     b.ToTable("typeproduit");
                 });
 
+            modelBuilder.Entity("td_revision.Models.Image", b =>
+                {
+                    b.HasOne("td_revision.Models.Produit", "ProduitNavigation")
+                        .WithMany("Images")
+                        .HasForeignKey("IdProduit")
+                        .IsRequired()
+                        .HasConstraintName("FK_images_produit");
+
+                    b.Navigation("ProduitNavigation");
+                });
+
             modelBuilder.Entity("td_revision.Models.Produit", b =>
                 {
                     b.HasOne("td_revision.Models.Marque", "MarqueProduitNavigation")
@@ -137,6 +169,11 @@ namespace td_revision.Migrations
             modelBuilder.Entity("td_revision.Models.Marque", b =>
                 {
                     b.Navigation("Produits");
+                });
+
+            modelBuilder.Entity("td_revision.Models.Produit", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("td_revision.Models.TypeProduit", b =>

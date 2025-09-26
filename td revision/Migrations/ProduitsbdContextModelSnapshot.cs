@@ -140,8 +140,8 @@ namespace td_revision.Migrations
                     b.HasOne("td_revision.Models.Produit", "ProduitNavigation")
                         .WithMany("Images")
                         .HasForeignKey("IdProduit")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_images_produit");
 
                     b.Navigation("ProduitNavigation");
                 });

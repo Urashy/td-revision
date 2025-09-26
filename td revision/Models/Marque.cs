@@ -7,6 +7,7 @@ namespace td_revision.Models
     public class Marque : IEntity
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("idmarque")]
         public int IdMarque { get; set; }
 

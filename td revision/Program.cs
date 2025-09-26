@@ -7,11 +7,11 @@ using td_revision.Models.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
+// Configuration CORS plus permissive pour le développement
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins,
+    options.AddPolicy("AllowBlazorClient",
         policy =>
         {
             policy.WithOrigins("https://localhost:7033")
@@ -42,8 +42,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// IMPORTANT : L'ordre est crucial !
+app.UseCors("AllowBlazorClient"); // CORS avant UseAuthorization
 app.UseHttpsRedirection();
-app.UseCors(MyAllowSpecificOrigins);
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();

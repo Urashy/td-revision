@@ -13,7 +13,10 @@ namespace WebApplication
             builder.RootComponents.Add<App>("#app");
             builder.RootComponents.Add<HeadOutlet>("head::after");
 
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+            builder.Services.AddScoped(sp => new HttpClient
+            {
+                BaseAddress = new Uri("http://localhost:5049/") // <<<<< pas de HTTPS
+            });
 
             builder.Services.AddScoped<IGenericService<Produit>, WebServiceGenerique<Produit>>();
             builder.Services.AddScoped<IGenericService<Marque>, WebServiceGenerique<Marque>>();

@@ -11,20 +11,49 @@ using td_revision.Models.EntityFramework;
 namespace td_revision.Migrations
 {
     [DbContext(typeof(ProduitsbdContext))]
-    [Migration("20250905130654_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250926092750_InitialCreate1")]
+    partial class InitialCreate1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.8")
+                .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("td_revision.Models.EntityFramework.Marque", b =>
+            modelBuilder.Entity("td_revision.Models.Image", b =>
+                {
+                    b.Property<int>("IdImage")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("idimage");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdImage"));
+
+                    b.Property<int>("IdProduit")
+                        .HasColumnType("integer")
+                        .HasColumnName("idproduit");
+
+                    b.Property<string>("NomImage")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nom");
+
+                    b.Property<string>("UrlPhoto")
+                        .HasColumnType("text")
+                        .HasColumnName("urlphoto");
+
+                    b.HasKey("IdImage");
+
+                    b.HasIndex("IdProduit");
+
+                    b.ToTable("image");
+                });
+
+            modelBuilder.Entity("td_revision.Models.Marque", b =>
                 {
                     b.Property<int>("IdMarque")
                         .ValueGeneratedOnAdd()
@@ -33,8 +62,9 @@ namespace td_revision.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdMarque"));
 
-                    b.Property<int>("Nom")
-                        .HasColumnType("integer")
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasColumnType("text")
                         .HasColumnName("nom");
 
                     b.HasKey("IdMarque");
@@ -42,7 +72,7 @@ namespace td_revision.Migrations
                     b.ToTable("marque");
                 });
 
-            modelBuilder.Entity("td_revision.Models.EntityFramework.Produit", b =>
+            modelBuilder.Entity("td_revision.Models.Produit", b =>
                 {
                     b.Property<int>("IdProduit")
                         .ValueGeneratedOnAdd()
@@ -55,46 +85,41 @@ namespace td_revision.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
-                    b.Property<int>("IdMarque")
+                    b.Property<int?>("IdMarque")
                         .HasColumnType("integer")
                         .HasColumnName("idmarque");
 
-                    b.Property<int>("IdTypeProduit")
+                    b.Property<int?>("IdTypeProduit")
                         .HasColumnType("integer")
                         .HasColumnName("idtypeproduit");
 
                     b.Property<string>("Nom")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("nom");
 
-                    b.Property<string>("NomPhoto")
-                        .HasColumnType("text")
-                        .HasColumnName("nomPhoto");
-
-                    b.Property<int>("StockMaxi")
+                    b.Property<int?>("StockMaxi")
                         .HasColumnType("integer")
-                        .HasColumnName("StockMaxi");
+                        .HasColumnName("stockmaxi");
 
-                    b.Property<int>("StockMini")
+                    b.Property<int?>("StockMini")
                         .HasColumnType("integer")
-                        .HasColumnName("stockMini");
+                        .HasColumnName("stockmini");
 
-                    b.Property<int>("StockReel")
+                    b.Property<int?>("StockReel")
                         .HasColumnType("integer")
-                        .HasColumnName("stockReel");
-
-                    b.Property<string>("UrlPhoto")
-                        .HasColumnType("text")
-                        .HasColumnName("UrlPhoto");
+                        .HasColumnName("stockreel");
 
                     b.HasKey("IdProduit");
 
                     b.HasIndex("IdMarque");
 
+                    b.HasIndex("IdTypeProduit");
+
                     b.ToTable("produit");
                 });
 
-            modelBuilder.Entity("td_revision.Models.EntityFramework.TypeProduit", b =>
+            modelBuilder.Entity("td_revision.Models.TypeProduit", b =>
                 {
                     b.Property<int>("IdTypeProduit")
                         .ValueGeneratedOnAdd()
@@ -103,8 +128,9 @@ namespace td_revision.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdTypeProduit"));
 
-                    b.Property<int>("Nom")
-                        .HasColumnType("integer")
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasColumnType("text")
                         .HasColumnName("nom");
 
                     b.HasKey("IdTypeProduit");
@@ -112,18 +138,27 @@ namespace td_revision.Migrations
                     b.ToTable("typeproduit");
                 });
 
-            modelBuilder.Entity("td_revision.Models.EntityFramework.Produit", b =>
+            modelBuilder.Entity("td_revision.Models.Image", b =>
                 {
-                    b.HasOne("td_revision.Models.EntityFramework.Marque", "MarqueProduitNavigation")
+                    b.HasOne("td_revision.Models.Produit", "ProduitNavigation")
+                        .WithMany("Images")
+                        .HasForeignKey("IdProduit")
+                        .IsRequired()
+                        .HasConstraintName("FK_images_produit");
+
+                    b.Navigation("ProduitNavigation");
+                });
+
+            modelBuilder.Entity("td_revision.Models.Produit", b =>
+                {
+                    b.HasOne("td_revision.Models.Marque", "MarqueProduitNavigation")
                         .WithMany("Produits")
                         .HasForeignKey("IdMarque")
-                        .IsRequired()
                         .HasConstraintName("FK_produits_marque");
 
-                    b.HasOne("td_revision.Models.EntityFramework.TypeProduit", "TypeProduitNavigation")
+                    b.HasOne("td_revision.Models.TypeProduit", "TypeProduitNavigation")
                         .WithMany("Produits")
-                        .HasForeignKey("IdMarque")
-                        .IsRequired()
+                        .HasForeignKey("IdTypeProduit")
                         .HasConstraintName("FK_produits_type_produit");
 
                     b.Navigation("MarqueProduitNavigation");
@@ -131,12 +166,17 @@ namespace td_revision.Migrations
                     b.Navigation("TypeProduitNavigation");
                 });
 
-            modelBuilder.Entity("td_revision.Models.EntityFramework.Marque", b =>
+            modelBuilder.Entity("td_revision.Models.Marque", b =>
                 {
                     b.Navigation("Produits");
                 });
 
-            modelBuilder.Entity("td_revision.Models.EntityFramework.TypeProduit", b =>
+            modelBuilder.Entity("td_revision.Models.Produit", b =>
+                {
+                    b.Navigation("Images");
+                });
+
+            modelBuilder.Entity("td_revision.Models.TypeProduit", b =>
                 {
                     b.Navigation("Produits");
                 });
