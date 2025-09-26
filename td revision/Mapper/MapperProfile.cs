@@ -31,15 +31,17 @@ namespace td_revision.Mapper
 
             // Mapping inverse pour ProduitDetailDTO - NE PAS MAPPER L'ID
             CreateMap<ProduitDetailDTO, Produit>()
-                .ForMember(dest => dest.IdProduit, opt => opt.Ignore()) // Important : ignorer l'ID
+                .ForMember(dest => dest.IdProduit, opt => opt.Ignore()) // ✅ Ignorer l'ID auto-généré
                 .ForMember(dest => dest.StockReel, opt => opt.MapFrom(src => src.Stock))
-                .ForMember(dest => dest.TypeProduitNavigation, opt => opt.Ignore())
-                .ForMember(dest => dest.MarqueProduitNavigation, opt => opt.Ignore())
-                .ForMember(dest => dest.Images, opt => opt.Ignore())
                 .ForMember(dest => dest.StockMini, opt => opt.MapFrom(src => 0)) // Valeur par défaut
                 .ForMember(dest => dest.StockMaxi, opt => opt.MapFrom(src => 100)) // Valeur par défaut
-                .ForMember(dest => dest.IdMarque, opt => opt.Ignore()) // Sera résolu par la logique métier
-                .ForMember(dest => dest.IdTypeProduit, opt => opt.Ignore()); // Sera résolu par la logique métier
+                .ForMember(dest => dest.Images, opt => opt.Ignore())
+                .ForMember(dest => dest.MarqueProduitNavigation, opt => opt.MapFrom(src =>
+                    !string.IsNullOrEmpty(src.Marque) ? new Marque { Nom = src.Marque } : null))
+                .ForMember(dest => dest.TypeProduitNavigation, opt => opt.MapFrom(src =>
+                    !string.IsNullOrEmpty(src.Type) ? new TypeProduit { Nom = src.Type } : null))
+                .ForMember(dest => dest.IdMarque, opt => opt.Ignore())
+                .ForMember(dest => dest.IdTypeProduit, opt => opt.Ignore());
 
             // Mapping simple pour Image
             CreateMap<Image, ImageDTO>()

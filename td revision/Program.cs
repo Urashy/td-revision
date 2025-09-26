@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using td_revision.Models;
@@ -6,9 +6,7 @@ using td_revision.Models.EntityFramework;
 using td_revision.Models.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
-
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 builder.Services.AddCors(options =>
@@ -26,28 +24,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//Sp�cification de la chaine de connexion pour le dbcontext depuis le fichier appsettings.json
+// Spécification de la chaine de connexion pour le dbcontext depuis le fichier appsettings.json
 builder.Services.AddDbContext<ProduitsbdContext>();
-
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-//repositories sp�cifiques
-//builder.Services.AddScoped<IDataRepository<Produit>, ProduitManager>();
-//builder.Services.AddScoped<IDataRepository<Marque>, MarqueManager>();
-//builder.Services.AddScoped<IDataRepository<TypeProduit>, TypeProduitManager>();
-
-
-builder.Services.AddScoped<IDataRepository<Image>, ManagerGenerique<Image>>();
-builder.Services.AddScoped<IDataRepository<Marque>, ManagerGenerique<Marque>>();
-builder.Services.AddScoped<IDataRepository<Produit>, ManagerGenerique<Produit>>();
-builder.Services.AddScoped<IDataRepository<TypeProduit>, ManagerGenerique<TypeProduit>>();
-
-builder.Services.AddScoped<IDataRepository<Image>, ImageManager>();
+// Utilise les managers spécialisés (ils héritent de ManagerGenerique)
 builder.Services.AddScoped<IDataRepository<Produit>, ProduitManager>();
 builder.Services.AddScoped<IDataRepository<Marque>, MarqueManager>();
 builder.Services.AddScoped<IDataRepository<TypeProduit>, TypeProduitManager>();
-
-// builder.Services.AddScoped(typeof(IDataRepository<>), typeof(GenericManager<>));
+builder.Services.AddScoped<IDataRepository<Image>, ImageManager>();
 
 var app = builder.Build();
 
@@ -61,5 +46,4 @@ app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
 app.UseAuthorization();
 app.MapControllers();
-
 app.Run();
