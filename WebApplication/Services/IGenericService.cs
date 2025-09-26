@@ -9,7 +9,7 @@ namespace WebApplication.Services
         Task<T> GetByIdAsync(int id);
         Task<T> GetByNameAsync(string name);
         Task AddAsync(T entity);
-        Task UpdateAsync(T entity);
+        Task UpdateAsync(int id, T entity);
         Task DeleteAsync(int id);
     }
 }

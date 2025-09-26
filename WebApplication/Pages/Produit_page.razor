@@ -1,29 +1,39 @@
 ﻿@page "/produits"
+@inject IProduitService WSProduit
 @inject IGenericService<Marque> WSMarque
-@inject IGenericService<Produit> WSProduit
 @inject IGenericService<TypeProduit> WSTypeProduit
 @inject IGenericService<Image> WSImage
 @using WebApplication.Models
 @using WebApplication.Services
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Produits</h1>
-    <a href="/produits/ajouter" class="btn btn-primary">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="text-primary">
+        <i class="fas fa-box-open me-2"></i>
+        Gestion des Produits
+    </h1>
+    <a href="/produits/ajouter" class="btn btn-primary btn-lg">
         <i class="fas fa-plus me-2"></i>
         Ajouter un produit
     </a>
 </div>
 
-<div class="filters-section" style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
-    <div class="row">
+<!-- Section de filtres -->
+<div class="filters-section mb-4 p-3 bg-light rounded shadow-sm">
+    <div class="row g-3">
         <div class="col-md-4">
-            <label for="searchNom" class="form-label">Recherche par nom :</label>
+            <label for="searchNom" class="form-label fw-bold">
+                <i class="fas fa-search me-1"></i>
+                Recherche par nom :
+            </label>
             <input type="text" id="searchNom" class="form-control" placeholder="Nom du produit..."
                    @bind="searchNom" @oninput="OnSearchChanged" />
         </div>
 
         <div class="col-md-4">
-            <label for="filterType" class="form-label">Filtrer par type :</label>
+            <label for="filterType" class="form-label fw-bold">
+                <i class="fas fa-tags me-1"></i>
+                Filtrer par type :
+            </label>
             <select id="filterType" class="form-select" @bind="SelectedType">
                 <option value="">-- Tous les types --</option>
                 @if (typesDisponibles != null)
@@ -37,7 +47,10 @@
         </div>
 
         <div class="col-md-4">
-            <label for="filterMarque" class="form-label">Filtrer par marque :</label>
+            <label for="filterMarque" class="form-label fw-bold">
+                <i class="fas fa-trademark me-1"></i>
+                Filtrer par marque :
+            </label>
             <select id="filterMarque" class="form-select" @bind="SelectedMarque">
                 <option value="">-- Toutes les marques --</option>
                 @if (marquesDisponibles != null)
@@ -51,109 +64,358 @@
         </div>
     </div>
 
-    <div class="row mt-2">
-        <div class="col-12">
-            <button class="btn btn-secondary btn-sm" @onclick="ClearFilters">Effacer les filtres</button>
-            <span class="ms-3 text-muted">@produitsFiltres?.Count() résultat(s) trouvé(s)</span>
+    <div class="row mt-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-secondary" @onclick="ClearFilters">
+                <i class="fas fa-eraser me-1"></i>
+                Effacer les filtres
+            </button>
+            <span class="badge bg-info fs-6">
+                @produitsFiltres?.Count() résultat(s) trouvé(s)
+            </span>
         </div>
     </div>
 </div>
 
-<div class="content">
-    @if (produits == null)
-    {
-        <p><em>Chargement...</em></p>
-    }
-    else if (!produitsFiltres.Any())
-    {
-        <p>Aucun produit trouvé avec ces critères.</p>
-    }
-    else
-    {
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Description</th>
-                    <th>Marque</th>
-                    <th>Type de Produit</th>
-                    <th>Stock Réel</th>
-                    <th>Photos</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var produit in produitsFiltres)
-                {
-                    <tr>
-                        <td>@produit.Nom</td>
-                        <td>@produit.Description</td>
-                        <td>@produit.Marque</td>
-                        <td>@produit.Type</td>
-                        <td>@produit.Stock</td>
-                        <td>
+<!-- Contenu principal -->
+@if (produits == null)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+        </div>
+        <p class="mt-3 text-muted">Chargement des produits...</p>
+    </div>
+}
+else if (!produitsFiltres.Any())
+{
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+        <p class="lead text-muted">Aucun produit trouvé avec ces critères.</p>
+    </div>
+}
+else
+{
+    <!-- Grille de cartes -->
+    <div class="row g-4">
+        @foreach (var produit in produitsFiltres)
+        {
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                <div class="card h-100 shadow-sm product-card" @onclick="() => VoirDetails(produit.IdProduit)">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="card-title mb-0 fw-bold">@produit.Nom</h6>
+                    </div>
+
+                    <div class="card-body d-flex flex-column">
+                        <div class="mb-3">
+                            <!-- Images du produit -->
                             @if (imagesProduits.ContainsKey(produit.IdProduit) && imagesProduits[produit.IdProduit].Any())
                             {
-                                <div class="d-flex flex-wrap gap-1">
-                                    @foreach (var image in imagesProduits[produit.IdProduit].Take(3)) // Afficher max 3 images
+                                var firstImage = imagesProduits[produit.IdProduit].First();
+                                <img src="@firstImage.UrlPhoto" alt="@firstImage.NomImage"
+                                     class="img-fluid rounded mb-2"
+                                     style="height: 150px; width: 100%; object-fit: cover;"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                                <div style="display: none; height: 150px; background-color: #f8f9fa; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center mb-2" style="height: 150px;">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="flex-grow-1">
+                            <p class="mb-2">
+                                <span class="badge bg-secondary me-2">
+                                    <i class="fas fa-tags me-1"></i>@produit.Type
+                                </span>
+                            </p>
+                            <p class="mb-0">
+                                <span class="badge bg-info">
+                                    <i class="fas fa-trademark me-1"></i>@produit.Marque
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-transparent d-flex justify-content-between">
+                        <button class="btn btn-outline-primary btn-sm" @onclick:stopPropagation="true" @onclick="() => VoirDetails(produit.IdProduit)">
+                            <i class="fas fa-eye me-1"></i>
+                            Détails
+                        </button>
+                        <div>
+                            <button class="btn btn-outline-warning btn-sm me-1" @onclick:stopPropagation="true" @onclick="() => ModifierProduit(produit.IdProduit)">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" @onclick:stopPropagation="true" @onclick="() => SupprimerProduit(produit.IdProduit, produit.Nom)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Modal de détails -->
+@if (showDetailModal && produitSelectionne != null)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Détails du produit
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FermerDetailModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary">Informations générales</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">Nom :</td>
+                                    <td>@produitSelectionne.Nom</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Marque :</td>
+                                    <td><span class="badge bg-info">@produitSelectionne.Marque</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Type :</td>
+                                    <td><span class="badge bg-secondary">@produitSelectionne.Type</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Stock :</td>
+                                    <td>
+                                        <span class="badge @(produitSelectionne.Stock > 0 ? "bg-success" : "bg-danger")">
+                                            @(produitSelectionne.Stock ?? 0)
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary">Images</h6>
+                            @if (imagesProduits.ContainsKey(produitSelectionne.IdProduit) && imagesProduits[produitSelectionne.IdProduit].Any())
+                            {
+                                <div class="row g-2">
+                                    @foreach (var image in imagesProduits[produitSelectionne.IdProduit])
                                     {
-                                        <img src="@image.UrlPhoto" alt="@image.NomImage"
-                                             style="max-width: 40px; max-height: 40px; object-fit: cover; border-radius: 3px;"
-                                             title="@image.NomImage" />
-                                    }
-                                    @if (imagesProduits[produit.IdProduit].Count() > 3)
-                                    {
-                                        <span class="text-muted small">+@(imagesProduits[produit.IdProduit].Count() - 3)</span>
+                                        <div class="col-6">
+                                            <img src="@image.UrlPhoto" alt="@image.NomImage" class="img-fluid rounded" style="height: 100px; object-fit: cover; width: 100%;" />
+                                            <small class="text-muted d-block text-center">@image.NomImage</small>
+                                        </div>
                                     }
                                 </div>
                             }
                             else
                             {
-                                <span class="text-muted">Aucune image</span>
+                                <p class="text-muted">Aucune image disponible</p>
                             }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-</div>
-
-<!-- Modal pour afficher les images en grand (optionnel) -->
-@if (showImageModal && selectedImages != null)
-{
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Images du produit</h5>
-                    <button type="button" class="btn-close" @onclick="CloseImageModal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        @foreach (var image in selectedImages)
-                        {
-                            <div class="col-md-4 mb-3">
-                                <img src="@image.UrlPhoto" alt="@image.NomImage" class="img-fluid" />
-                                <p class="text-center small mt-1">@image.NomImage</p>
-                            </div>
-                        }
+                        </div>
                     </div>
+                    @if (!string.IsNullOrEmpty(produitSelectionne.Description))
+                    {
+                        <hr>
+                        <h6 class="fw-bold text-primary">Description</h6>
+                        <p>@produitSelectionne.Description</p>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" @onclick="() => ModifierProduit(produitSelectionne.IdProduit)">
+                        <i class="fas fa-edit me-2"></i>
+                        Modifier
+                    </button>
+                    <button type="button" class="btn btn-secondary" @onclick="FermerDetailModal">Fermer</button>
                 </div>
             </div>
         </div>
     </div>
 }
 
+<!-- Modal de modification -->
+@if (showEditModal && produitAModifier != null)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>
+                        Modifier le produit
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="FermerEditModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(errorMessageEdit))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @errorMessageEdit
+                        </div>
+                    }
+
+                    <EditForm Model="@produitAModifier" OnValidSubmit="@ConfirmerModification">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger mb-3" />
+
+                        <div class="row g-3">
+                            <!-- Nom du produit -->
+                            <div class="col-md-6">
+                                <label for="editNom" class="form-label fw-bold">
+                                    Nom du produit <span class="text-danger">*</span>
+                                </label>
+                                <InputText id="editNom" class="form-control" @bind-Value="produitAModifier.Nom" />
+                                <ValidationMessage For="@(() => produitAModifier.Nom)" />
+                            </div>
+
+                            <!-- Stock -->
+                            <div class="col-md-6">
+                                <label for="editStock" class="form-label fw-bold">Stock</label>
+                                <InputNumber id="editStock" class="form-control" @bind-Value="produitAModifier.Stock" />
+                                <ValidationMessage For="@(() => produitAModifier.Stock)" />
+                            </div>
+
+                            <!-- Marque -->
+                            <div class="col-md-6">
+                                <label for="editMarque" class="form-label fw-bold">
+                                    Marque <span class="text-danger">*</span>
+                                </label>
+                                <select id="editMarque" class="form-select" @bind="produitAModifier.Marque">
+                                    <option value="">-- Sélectionnez une marque --</option>
+                                    @if (marquesDisponibles != null)
+                                    {
+                                        @foreach (var marque in marquesDisponibles)
+                                        {
+                                            <option value="@marque.Nom">@marque.Nom</option>
+                                        }
+                                    }
+                                </select>
+                                <ValidationMessage For="@(() => produitAModifier.Marque)" />
+                            </div>
+
+                            <!-- Type -->
+                            <div class="col-md-6">
+                                <label for="editType" class="form-label fw-bold">
+                                    Type de produit <span class="text-danger">*</span>
+                                </label>
+                                <select id="editType" class="form-select" @bind="produitAModifier.Type">
+                                    <option value="">-- Sélectionnez un type --</option>
+                                    @if (typesDisponibles != null)
+                                    {
+                                        @foreach (var type in typesDisponibles)
+                                        {
+                                            <option value="@type.Nom">@type.Nom</option>
+                                        }
+                                    }
+                                </select>
+                                <ValidationMessage For="@(() => produitAModifier.Type)" />
+                            </div>
+
+                            <!-- Description -->
+                            <div class="col-12">
+                                <label for="editDescription" class="form-label fw-bold">Description</label>
+                                <InputTextArea id="editDescription" class="form-control" rows="3" @bind-Value="produitAModifier.Description" />
+                                <ValidationMessage For="@(() => produitAModifier.Description)" />
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="FermerEditModal">Annuler</button>
+                            <button type="submit" class="btn btn-warning" disabled="@isSubmittingEdit">
+                                @if (isSubmittingEdit)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-save me-2"></i>
+                                }
+                                @(isSubmittingEdit ? "Modification..." : "Sauvegarder")
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal de confirmation de suppression -->
+@if (showDeleteModal && produitASupprimer != null)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirmer la suppression
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FermerDeleteModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-trash-alt fa-4x text-danger mb-3"></i>
+                        <p class="lead">Êtes-vous sûr de vouloir supprimer le produit :</p>
+                        <p class="fw-bold fs-5 text-danger">"@nomProduitASupprimer"</p>
+                        <p class="text-muted">Cette action est irréversible.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="FermerDeleteModal">Annuler</button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmerSuppression" disabled="@isSubmittingDelete">
+                        @if (isSubmittingDelete)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        else
+                        {
+                            <i class="fas fa-trash me-2"></i>
+                        }
+                        @(isSubmittingDelete ? "Suppression..." : "Supprimer définitivement")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .product-card {
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+        }
+
+    .filters-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 1px solid #dee2e6;
+    }
+</style>
+
 @code {
-    private IEnumerable<Produit>? produits;
-    private IEnumerable<Produit> produitsFiltres = new List<Produit>();
-
-    // Dictionnaire pour stocker les images par produit
+    // Listes de données
+    private IEnumerable<ProduitSimple>? produits;
+    private IEnumerable<ProduitSimple> produitsFiltres = new List<ProduitSimple>();
     private Dictionary<int, List<Image>> imagesProduits = new Dictionary<int, List<Image>>();
+    private List<Marque>? marquesDisponibles;
+    private List<TypeProduit>? typesDisponibles;
 
-    // Propriétés avec setter qui appliquent automatiquement les filtres
+    // Variables de filtrage
     private string searchNom = "";
-
     private string selectedType = "";
     private string SelectedType
     {
@@ -176,49 +438,62 @@
         }
     }
 
-    // Listes pour les dropdowns
-    private List<Marque>? marquesDisponibles;
-    private List<TypeProduit>? typesDisponibles;
+    // Variables pour les modals
+    private bool showDetailModal = false;
+    private bool showEditModal = false;
+    private bool showDeleteModal = false;
 
-    // Variables pour le modal d'images (optionnel)
-    private bool showImageModal = false;
-    private List<Image>? selectedImages;
+    private Produit? produitSelectionne;
+    private Produit? produitAModifier;
+    private (int id, string nom)? produitASupprimer;
+    private string nomProduitASupprimer => produitASupprimer?.nom ?? "";
+
+    private string errorMessageEdit = "";
+    private bool isSubmittingEdit = false;
+    private bool isSubmittingDelete = false;
 
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            // Charger les produits (version simple pour la liste)
+            produits = await WSProduit.GetAllSimpleAsync();
 
-        // Charger les produits
-        produits = await WSProduit.GetAllAsync();
+            // Charger les données de référence
+            await ChargerDonneesReferences();
 
-        // Charger les marques depuis l'API
+            // Charger les images
+            await LoadProductImages();
+
+            // Appliquer les filtres initiaux
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors du chargement : {ex.Message}");
+        }
+    }
+
+    private async Task ChargerDonneesReferences()
+    {
+        // Charger les marques
         var marquesResponse = await WSMarque.GetAllAsync();
-        marquesDisponibles = marquesResponse?.ToList();
+        marquesDisponibles = marquesResponse?.ToList() ?? new List<Marque>();
 
-        Console.WriteLine($"Marques chargées : {marquesDisponibles?.Count}");
-
-        // Charger les types depuis l'API
+        // Charger les types de produits
         var typesResponse = await WSTypeProduit.GetAllAsync();
-        typesDisponibles = typesResponse?.ToList();
-
-        // Charger toutes les images et les organiser par produit
-        await LoadProductImages();
-
-        // Initialiser la liste filtrée
-        ApplyFilters();
+        typesDisponibles = typesResponse?.ToList() ?? new List<TypeProduit>();
     }
 
     private async Task LoadProductImages()
     {
         try
         {
-            // Charger toutes les images
             var allImages = await WSImage.GetAllAsync();
-
             if (allImages != null && produits != null)
             {
-                // Organiser les images par IdProduit
                 imagesProduits = allImages
-                    .GroupBy(img => img.IdProduit) // Remplacez par la propriété correcte
+                    .GroupBy(img => img.IdProduit)
                     .ToDictionary(g => g.Key, g => g.ToList());
             }
         }
@@ -229,14 +504,10 @@
         }
     }
 
+    // Méthodes de filtrage
     private void OnSearchChanged(ChangeEventArgs e)
     {
         searchNom = e.Value?.ToString() ?? "";
-        ApplyFilters();
-    }
-
-    private void OnFilterChanged()
-    {
         ApplyFilters();
     }
 
@@ -244,19 +515,14 @@
     {
         if (produits == null)
         {
-            produitsFiltres = new List<Produit>();
+            produitsFiltres = new List<ProduitSimple>();
             return;
         }
 
         produitsFiltres = produits.Where(p =>
-            // Filtre par nom (recherche insensible à la casse)
             (string.IsNullOrEmpty(searchNom) ||
              (p.Nom?.Contains(searchNom, StringComparison.OrdinalIgnoreCase) ?? false)) &&
-
-            // Filtre par type
             (string.IsNullOrEmpty(selectedType) || p.Type == selectedType) &&
-
-            // Filtre par marque
             (string.IsNullOrEmpty(selectedMarque) || p.Marque == selectedMarque)
         );
 
@@ -271,19 +537,123 @@
         ApplyFilters();
     }
 
-    // Méthodes pour le modal d'images (optionnel)
-    private void ShowProductImages(int produitId)
+    // Méthodes pour les modals
+    private async Task VoirDetails(int produitId)
     {
-        if (imagesProduits.ContainsKey(produitId))
+        try
         {
-            selectedImages = imagesProduits[produitId];
-            showImageModal = true;
+            produitSelectionne = await WSProduit.GetByIdDetailAsync(produitId);
+            Console.WriteLine($"Produit sélectionné pour détails : {produitSelectionne?.Nom}");
+            Console.WriteLine($"Produit sélectionné pour détails : {produitSelectionne?.Marque}");
+            Console.WriteLine($"Produit sélectionné pour détails : {produitSelectionne?.Type}");
+            showDetailModal = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors du chargement des détails : {ex.Message}");
         }
     }
 
-    private void CloseImageModal()
+    private void FermerDetailModal()
     {
-        showImageModal = false;
-        selectedImages = null;
+        showDetailModal = false;
+        produitSelectionne = null;
+        StateHasChanged();
+    }
+
+    private async Task ModifierProduit(int produitId)
+    {
+        try
+        {
+            FermerDetailModal(); // Fermer le modal de détails s'il est ouvert
+
+            produitAModifier = await WSProduit.GetByIdDetailAsync(produitId);
+            errorMessageEdit = "";
+            showEditModal = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors du chargement pour modification : {ex.Message}");
+            errorMessageEdit = $"Erreur lors du chargement : {ex.Message}";
+        }
+    }
+
+    private void FermerEditModal()
+    {
+        showEditModal = false;
+        produitAModifier = null;
+        errorMessageEdit = "";
+        isSubmittingEdit = false;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmerModification()
+    {
+        isSubmittingEdit = true;
+        errorMessageEdit = "";
+
+        try
+        {
+            await WSProduit.UpdateAsync(produitAModifier.IdProduit, produitAModifier);
+
+            // Recharger les données
+            await OnInitializedAsync();
+
+            FermerEditModal();
+        }
+        catch (Exception ex)
+        {
+            errorMessageEdit = $"Erreur lors de la modification : {ex.Message}";
+            Console.WriteLine($"Erreur ConfirmerModification : {ex}");
+        }
+        finally
+        {
+            isSubmittingEdit = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SupprimerProduit(int produitId, string nomProduit)
+    {
+        produitASupprimer = (produitId, nomProduit);
+        showDeleteModal = true;
+        StateHasChanged();
+    }
+
+    private void FermerDeleteModal()
+    {
+        showDeleteModal = false;
+        produitASupprimer = null;
+        isSubmittingDelete = false;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmerSuppression()
+    {
+        if (produitASupprimer == null) return;
+
+        isSubmittingDelete = true;
+
+        try
+        {
+            await WSProduit.DeleteAsync(produitASupprimer.Value.id);
+
+            // Recharger les données
+            await OnInitializedAsync();
+
+            FermerDeleteModal();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la suppression : {ex.Message}");
+            // Optionnel : afficher un message d'erreur
+        }
+        finally
+        {
+            isSubmittingDelete = false;
+            StateHasChanged();
+        }
     }
 }
