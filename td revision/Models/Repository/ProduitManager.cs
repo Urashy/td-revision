@@ -22,6 +22,14 @@ namespace td_revision.Models.Repository
                 .ToListAsync();
         }
 
+        public override async Task<ActionResult<Produit?>> GetByIdAsync(int id)
+        {
+            return await dbSet
+                .Include(p => p.MarqueProduitNavigation)
+                .Include(p => p.TypeProduitNavigation)
+                .FirstOrDefaultAsync(p => p.IdProduit == id);
+        }
+
         public override async Task<ActionResult<Produit?>> GetByStringAsync(string str)
         {
             return await dbSet.FirstOrDefaultAsync(p => p.Nom == str);
