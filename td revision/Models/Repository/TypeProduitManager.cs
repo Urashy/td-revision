@@ -12,7 +12,7 @@ namespace td_revision.Models.Repository
 
         public override async Task<ActionResult<TypeProduit?>> GetByStringAsync(string str)
         {
-            return await GetByStringPropertyAsync(t => t.Nom, str);
+            return await dbSet.FirstOrDefaultAsync(t => t.Nom== str);
         }
     }
 }

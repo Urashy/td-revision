@@ -47,14 +47,16 @@ namespace td_revision.Mapper
 
             // ========== PRODUIT -> PRODUITDTO (lecture simple) ==========
             CreateMap<Produit, ProduitDTO>()
-                .ForMember(dest => dest.NbProduits, opt => opt.MapFrom(src => src.StockReel ?? 0));
+                .ForMember(dest => dest.Marque, opt => opt.MapFrom(src => src.MarqueProduitNavigation.Nom))
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => src.TypeProduitNavigation.Nom));
+
+
 
             CreateMap<ProduitDTO, Produit>()
                 .ForMember(dest => dest.IdProduit, opt => opt.Ignore())                    // ✅ Ignorer l'ID auto-généré
                 .ForMember(dest => dest.Description, opt => opt.Ignore())
                 .ForMember(dest => dest.IdMarque, opt => opt.Ignore())
                 .ForMember(dest => dest.IdTypeProduit, opt => opt.Ignore())
-                .ForMember(dest => dest.StockReel, opt => opt.MapFrom(src => src.NbProduits))
                 .ForMember(dest => dest.StockMini, opt => opt.MapFrom(src => 0))
                 .ForMember(dest => dest.StockMaxi, opt => opt.MapFrom(src => 100))
                 .ForMember(dest => dest.MarqueProduitNavigation, opt => opt.Ignore())

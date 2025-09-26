@@ -8,8 +8,10 @@ namespace td_revision.Models.Repository
 {
     public class ProduitManager : ManagerGenerique<Produit>
     {
+        private readonly ProduitsbdContext _context;
         public ProduitManager(ProduitsbdContext context) : base(context)
         {
+            _context = context;
         }
 
         public override async Task<ActionResult<IEnumerable<Produit>>> GetAllAsync()
@@ -22,7 +24,7 @@ namespace td_revision.Models.Repository
 
         public override async Task<ActionResult<Produit?>> GetByStringAsync(string str)
         {
-            return await GetByStringPropertyAsync(p => p.Nom, str);
+            return await dbSet.FirstOrDefaultAsync(p => p.Nom == str);
         }
     }
 }

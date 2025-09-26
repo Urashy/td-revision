@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 
 namespace td_revision.Models.Repository
 {
-    public class ManagerGenerique<TEntity> : IDataRepository<TEntity> where TEntity : class
+    public abstract class ManagerGenerique<TEntity> : IDataRepository<TEntity> where TEntity : class
     {
         protected readonly ProduitsbdContext context;
         protected readonly DbSet<TEntity> dbSet;
@@ -26,10 +26,7 @@ namespace td_revision.Models.Repository
             return await dbSet.FindAsync(id);
         }
 
-        public virtual async Task<ActionResult<TEntity?>> GetByStringAsync(string str)
-        {
-            throw new NotImplementedException("GetByStringAsync must be implemented in derived class");
-        }
+        public abstract Task<ActionResult<TEntity?>> GetByStringAsync(string str);
 
         public virtual async Task AddAsync(TEntity entity)
         {
@@ -48,38 +45,6 @@ namespace td_revision.Models.Repository
         {
             dbSet.Remove(entity);
             await context.SaveChangesAsync();
-        }
-
-        protected async Task<ActionResult<TEntity?>> GetByPropertyAsync<TProperty>(
-            Expression<Func<TEntity, TProperty>> propertySelector,
-            TProperty value)
-        {
-            var parameter = Expression.Parameter(typeof(TEntity), "x");
-            var property = Expression.Property(parameter, ((MemberExpression)propertySelector.Body).Member.Name);
-            var constant = Expression.Constant(value);
-            var equal = Expression.Equal(property, constant);
-            var lambda = Expression.Lambda<Func<TEntity, bool>>(equal, parameter);
-
-            return await dbSet.FirstOrDefaultAsync(lambda);
-        }
-
-        protected async Task<ActionResult<TEntity?>> GetByStringPropertyAsync(
-            Expression<Func<TEntity, string>> propertySelector,
-            string value)
-        {
-            var parameter = Expression.Parameter(typeof(TEntity), "x");
-            var property = Expression.Property(parameter, ((MemberExpression)propertySelector.Body).Member.Name);
-
-            var toUpperMethod = typeof(string).GetMethod("ToUpper", new Type[0]);
-            var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-
-            var propertyToUpper = Expression.Call(property, toUpperMethod);
-            var valueToUpper = Expression.Call(Expression.Constant(value), toUpperMethod);
-            var contains = Expression.Call(propertyToUpper, containsMethod, valueToUpper);
-
-            var lambda = Expression.Lambda<Func<TEntity, bool>>(contains, parameter);
-
-            return await dbSet.FirstOrDefaultAsync(lambda);
         }
     }
 }
