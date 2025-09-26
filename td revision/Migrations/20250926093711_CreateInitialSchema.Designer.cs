@@ -11,8 +11,8 @@ using td_revision.Models.EntityFramework;
 namespace td_revision.Migrations
 {
     [DbContext(typeof(ProduitsbdContext))]
-    [Migration("20250926092750_InitialCreate1")]
-    partial class InitialCreate1
+    [Migration("20250926093711_CreateInitialSchema")]
+    partial class CreateInitialSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
