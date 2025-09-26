@@ -33,52 +33,64 @@ public partial class ProduitsbdContext : DbContext
         {
             entity.HasKey(e => e.IdProduit);
 
+            // ← AJOUTE CETTE LIGNE pour forcer l'auto-incrémentation
+            entity.Property(e => e.IdProduit)
+                  .ValueGeneratedOnAdd()
+                  .UseIdentityColumn();
+
             entity.HasOne(p => p.MarqueProduitNavigation)
-            .WithMany(m => m.Produits)
-            .OnDelete(deleteBehavior: DeleteBehavior.ClientSetNull)
-            .HasConstraintName("FK_produits_marque");
-
-
+                  .WithMany(m => m.Produits)
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("FK_produits_marque");
         });
 
         modelBuilder.Entity<TypeProduit>(entity =>
         {
             entity.HasKey(e => e.IdTypeProduit);
 
+            // Même chose pour TypeProduit
+            entity.Property(e => e.IdTypeProduit)
+                  .ValueGeneratedOnAdd()
+                  .UseIdentityColumn();
+
             entity.HasMany(p => p.Produits)
-            .WithOne(m => m.TypeProduitNavigation)
-            .OnDelete(deleteBehavior: DeleteBehavior.ClientSetNull)
-            .HasConstraintName("FK_produits_type_produit");
-
-
+                  .WithOne(m => m.TypeProduitNavigation)
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("FK_produits_type_produit");
         });
-
 
         modelBuilder.Entity<Marque>(entity =>
         {
             entity.HasKey(e => e.IdMarque);
 
+            // Même chose pour Marque
+            entity.Property(e => e.IdMarque)
+                  .ValueGeneratedOnAdd()
+                  .UseIdentityColumn();
+
             entity.HasMany(p => p.Produits)
-            .WithOne(m => m.MarqueProduitNavigation)
-            .OnDelete(deleteBehavior: DeleteBehavior.ClientSetNull)
-            .HasConstraintName("FK_produits_marque");
-
-
+                  .WithOne(m => m.MarqueProduitNavigation)
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("FK_produits_marque");
         });
 
         modelBuilder.Entity<Image>(entity =>
         {
             entity.HasKey(e => e.IdImage);
 
+            // Même chose pour Image
+            entity.Property(e => e.IdImage)
+                  .ValueGeneratedOnAdd()
+                  .UseIdentityColumn();
+
             entity.HasOne(i => i.ProduitNavigation)
-                .WithMany(p => p.Images)
-                .HasForeignKey(i => i.IdProduit)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_images_produit");
+                  .WithMany(p => p.Images)
+                  .HasForeignKey(i => i.IdProduit)
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("FK_images_produit");
         });
 
         OnModelCreatingPartial(modelBuilder);
-
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

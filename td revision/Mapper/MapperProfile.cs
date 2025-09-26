@@ -29,16 +29,17 @@ namespace td_revision.Mapper
                 .ForMember(dest => dest.Stock, opt => opt.MapFrom(src => src.StockReel))
                 .ForMember(dest => dest.EnReappro, opt => opt.MapFrom(src => src.StockReel < src.StockMini));
 
-            // Mapping inverse pour ProduitDetailDTO
+            // Mapping inverse pour ProduitDetailDTO - NE PAS MAPPER L'ID
             CreateMap<ProduitDetailDTO, Produit>()
+                .ForMember(dest => dest.IdProduit, opt => opt.Ignore()) // Important : ignorer l'ID
                 .ForMember(dest => dest.StockReel, opt => opt.MapFrom(src => src.Stock))
                 .ForMember(dest => dest.TypeProduitNavigation, opt => opt.Ignore())
                 .ForMember(dest => dest.MarqueProduitNavigation, opt => opt.Ignore())
                 .ForMember(dest => dest.Images, opt => opt.Ignore())
-                .ForMember(dest => dest.StockMini, opt => opt.Ignore())
-                .ForMember(dest => dest.StockMaxi, opt => opt.Ignore())
-                .ForMember(dest => dest.IdMarque, opt => opt.Ignore())
-                .ForMember(dest => dest.IdTypeProduit, opt => opt.Ignore());
+                .ForMember(dest => dest.StockMini, opt => opt.MapFrom(src => 0)) // Valeur par défaut
+                .ForMember(dest => dest.StockMaxi, opt => opt.MapFrom(src => 100)) // Valeur par défaut
+                .ForMember(dest => dest.IdMarque, opt => opt.Ignore()) // Sera résolu par la logique métier
+                .ForMember(dest => dest.IdTypeProduit, opt => opt.Ignore()); // Sera résolu par la logique métier
 
             // Mapping simple pour Image
             CreateMap<Image, ImageDTO>()
@@ -46,6 +47,7 @@ namespace td_revision.Mapper
                 .ForMember(dest => dest.Url, opt => opt.MapFrom(src => src.UrlPhoto))
                 .ForMember(dest => dest.Description, opt => opt.Ignore())
                 .ReverseMap()
+                .ForMember(dest => dest.IdImage, opt => opt.Ignore()) // Ignorer l'ID pour les nouvelles images
                 .ForMember(dest => dest.NomImage, opt => opt.MapFrom(src => src.Nom))
                 .ForMember(dest => dest.UrlPhoto, opt => opt.MapFrom(src => src.Url))
                 .ForMember(dest => dest.ProduitNavigation, opt => opt.Ignore());

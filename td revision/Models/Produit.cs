@@ -8,6 +8,7 @@ namespace td_revision.Models
     {
         [Key]
         [Column("idproduit")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int IdProduit { get; set; }
 
         [Column("nom")]
@@ -41,8 +42,7 @@ namespace td_revision.Models
 
         [InverseProperty(nameof(Image.ProduitNavigation))]
         public virtual ICollection<Image> Images { get; set; } = new List<Image>();
+
         public int Id => IdProduit;
-
-
     }
 }

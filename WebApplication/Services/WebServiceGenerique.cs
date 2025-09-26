@@ -1,5 +1,7 @@
 ﻿using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using WebApplication.Models;
 
 namespace WebApplication.Services
@@ -9,34 +11,45 @@ namespace WebApplication.Services
         private readonly HttpClient _httpClient;
         private readonly string _controllerName;
 
-        // Constructeur pour l'injection de dépendances
         public WebServiceGenerique(HttpClient httpClient)
         {
             _controllerName = typeof(T).Name;
 
-            // Créer un nouveau HttpClient avec la bonne adresse de base
-            _httpClient = new HttpClient()
-            {
-                BaseAddress = new Uri($"http://localhost:5049/api/{_controllerName}/")
-            };
-        }
+            // Utiliser l'HttpClient injecté et définir la base address
+            _httpClient = httpClient;
 
-        // Constructeur sans paramètres (pour compatibilité)
-        public WebServiceGenerique()
-        {
-            _controllerName = typeof(T).Name;
-            _httpClient = new HttpClient
+            // S'assurer que l'URL de base est correcte
+            if (_httpClient.BaseAddress == null)
             {
-                BaseAddress = new Uri($"http://localhost:5049/api/{_controllerName}/")
-            };
+                _httpClient.BaseAddress = new Uri("http://localhost:5049/");
+            }
+
+            Console.WriteLine($"WebServiceGenerique pour {_controllerName} initialisé avec base URL: {_httpClient.BaseAddress}");
         }
 
         public async Task<IEnumerable<T>> GetAllAsync()
         {
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<IEnumerable<T>>("GetAll");
-                return response ?? new List<T>();
+                var url = $"api/{_controllerName}/GetAll";
+                Console.WriteLine($"GET Request URL: {_httpClient.BaseAddress}{url}");
+
+                var response = await _httpClient.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Response content: {content}");
+
+                    var result = await response.Content.ReadFromJsonAsync<IEnumerable<T>>();
+                    return result ?? new List<T>();
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error response: {response.StatusCode} - {errorContent}");
+                    throw new HttpRequestException($"Erreur {response.StatusCode}: {errorContent}");
+                }
             }
             catch (Exception ex)
             {
@@ -49,7 +62,13 @@ namespace WebApplication.Services
         {
             try
             {
-                return await _httpClient.GetFromJsonAsync<T>($"GetById/{id}");
+                var url = $"api/{_controllerName}/GetById/{id}";
+                Console.WriteLine($"GET Request URL: {_httpClient.BaseAddress}{url}");
+
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadFromJsonAsync<T>();
             }
             catch (Exception ex)
             {
@@ -62,9 +81,24 @@ namespace WebApplication.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"GetByName?name={Uri.EscapeDataString(name)}");
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<T>();
+                var url = $"api/{_controllerName}/GetByName?name={Uri.EscapeDataString(name)}";
+                Console.WriteLine($"GET Request URL: {_httpClient.BaseAddress}{url}");
+
+                var response = await _httpClient.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<T>();
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return null;
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    throw new HttpRequestException($"Erreur {response.StatusCode}: {errorContent}");
+                }
             }
             catch (Exception ex)
             {
@@ -77,8 +111,23 @@ namespace WebApplication.Services
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("Add", entity);
-                response.EnsureSuccessStatusCode();
+                var url = $"api/{_controllerName}/Add";
+                Console.WriteLine($"POST Request URL: {_httpClient.BaseAddress}{url}");
+
+                // Sérialiser l'objet pour debug
+                var json = JsonSerializer.Serialize(entity, new JsonSerializerOptions { WriteIndented = true });
+                Console.WriteLine($"Payload: {json}");
+
+                var response = await _httpClient.PostAsJsonAsync(url, entity);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error response: {response.StatusCode} - {errorContent}");
+                    throw new HttpRequestException($"Erreur {response.StatusCode}: {errorContent}");
+                }
+
+                Console.WriteLine($"Ajout réussi pour {_controllerName}");
             }
             catch (Exception ex)
             {
@@ -91,8 +140,17 @@ namespace WebApplication.Services
         {
             try
             {
-                var response = await _httpClient.PutAsJsonAsync($"Update/{entity.Id}", entity);
-                response.EnsureSuccessStatusCode();
+                var url = $"api/{_controllerName}/Update/{entity.Id}";
+                Console.WriteLine($"PUT Request URL: {_httpClient.BaseAddress}{url}");
+
+                var response = await _httpClient.PutAsJsonAsync(url, entity);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error response: {response.StatusCode} - {errorContent}");
+                    throw new HttpRequestException($"Erreur {response.StatusCode}: {errorContent}");
+                }
             }
             catch (Exception ex)
             {
@@ -105,20 +163,23 @@ namespace WebApplication.Services
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"Delete/{id}");
-                response.EnsureSuccessStatusCode();
+                var url = $"api/{_controllerName}/Delete/{id}";
+                Console.WriteLine($"DELETE Request URL: {_httpClient.BaseAddress}{url}");
+
+                var response = await _httpClient.DeleteAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error response: {response.StatusCode} - {errorContent}");
+                    throw new HttpRequestException($"Erreur {response.StatusCode}: {errorContent}");
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Erreur DeleteAsync pour {_controllerName}: {ex.Message}");
                 throw;
             }
-        }
-
-        // Libérer les ressources
-        public void Dispose()
-        {
-            _httpClient?.Dispose();
         }
     }
 }
