@@ -8,7 +8,10 @@ using td_revision.Models.Repository;
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// Configuration CORS plus permissive pour le développement
+builder.Services.AddDbContext<ProduitsbdContext>(options =>
+    options.UseNpgsql(connectionString));
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorClient",
@@ -24,7 +27,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Spécification de la chaine de connexion pour le dbcontext depuis le fichier appsettings.json
 builder.Services.AddDbContext<ProduitsbdContext>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

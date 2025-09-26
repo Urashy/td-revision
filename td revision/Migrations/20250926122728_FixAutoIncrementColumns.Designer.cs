@@ -11,8 +11,8 @@ using td_revision.Models.EntityFramework;
 namespace td_revision.Migrations
 {
     [DbContext(typeof(ProduitsbdContext))]
-    [Migration("20250926110541_test")]
-    partial class test
+    [Migration("20250926122728_FixAutoIncrementColumns")]
+    partial class FixAutoIncrementColumns
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
