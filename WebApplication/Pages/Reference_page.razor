@@ -1,0 +1,624 @@
+﻿@page "/references"
+@inject IGenericService<Marque> WSMarque
+@inject IGenericService<TypeProduit> WSTypeProduit
+@using WebApplication.Models
+@using WebApplication.Services
+
+<PageTitle>Gestion des Références</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-primary">
+                    <i class="fas fa-cog me-2"></i>
+                    Gestion des Références
+                </h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- GESTION DES MARQUES -->
+        <div class="col-xl-6 col-lg-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-trademark me-2"></i>
+                        Marques (@(marques?.Count() ?? 0))
+                    </h4>
+                    <button class="btn btn-light btn-sm" @onclick="OuvrirModalAjoutMarque">
+                        <i class="fas fa-plus me-1"></i>
+                        Ajouter
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (marques == null)
+                    {
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </div>
+                    }
+                    else if (!marques.Any())
+                    {
+                        <p class="text-muted text-center py-3">Aucune marque enregistrée</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Nb Produits</th>
+                                        <th width="120">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var marque in marques)
+                                    {
+                                        <tr>
+                                            <td class="fw-bold">@marque.Nom</td>
+                                            <td>
+                                                <span class="badge bg-info">@marque.NbProduits</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button class="btn btn-sm btn-outline-warning"
+                                                            @onclick="() => ModifierMarque(marque)">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger"
+                                                            @onclick="() => SupprimerMarque(marque)"
+                                                            disabled="@(marque.NbProduits > 0)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- GESTION DES TYPES DE PRODUITS -->
+        <div class="col-xl-6 col-lg-12">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-tags me-2"></i>
+                        Types de Produits (@(typesProduit?.Count() ?? 0))
+                    </h4>
+                    <button class="btn btn-light btn-sm" @onclick="OuvrirModalAjoutType">
+                        <i class="fas fa-plus me-1"></i>
+                        Ajouter
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (typesProduit == null)
+                    {
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </div>
+                    }
+                    else if (!typesProduit.Any())
+                    {
+                        <p class="text-muted text-center py-3">Aucun type de produit enregistré</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Nb Produits</th>
+                                        <th width="120">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var type in typesProduit)
+                                    {
+                                        <tr>
+                                            <td class="fw-bold">@type.Nom</td>
+                                            <td>
+                                                <span class="badge bg-info">@type.NbProduits</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button class="btn btn-sm btn-outline-warning"
+                                                            @onclick="() => ModifierType(type)">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger"
+                                                            @onclick="() => SupprimerType(type)"
+                                                            disabled="@(type.NbProduits > 0)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL MARQUE -->
+@if (showModalMarque)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas @(modeEditionMarque ? "fa-edit" : "fa-plus") me-2"></i>
+                        @(modeEditionMarque ? "Modifier la marque" : "Ajouter une marque")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FermerModalMarque"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(errorMessageMarque))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @errorMessageMarque
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label for="nomMarque" class="form-label">
+                            Nom de la marque <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" id="nomMarque" class="form-control"
+                               @bind="marqueEnCours.Nom"
+                               placeholder="Entrez le nom de la marque" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="FermerModalMarque">
+                        Annuler
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="ValiderMarque" disabled="@isSubmittingMarque">
+                        @if (isSubmittingMarque)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        else
+                        {
+                            <i class="fas @(modeEditionMarque ? "fa-save" : "fa-plus") me-2"></i>
+                        }
+                        @(isSubmittingMarque ? (modeEditionMarque ? "Modification..." : "Ajout...") : (modeEditionMarque ? "Modifier" : "Ajouter"))
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- MODAL TYPE -->
+@if (showModalType)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas @(modeEditionType ? "fa-edit" : "fa-plus") me-2"></i>
+                        @(modeEditionType ? "Modifier le type de produit" : "Ajouter un type de produit")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FermerModalType"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(errorMessageType))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            @errorMessageType
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label for="nomType" class="form-label">
+                            Nom du type de produit <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" id="nomType" class="form-control"
+                               @bind="typeEnCours.Nom"
+                               placeholder="Entrez le nom du type de produit" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="FermerModalType">
+                        Annuler
+                    </button>
+                    <button type="button" class="btn btn-success" @onclick="ValiderType" disabled="@isSubmittingType">
+                        @if (isSubmittingType)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        else
+                        {
+                            <i class="fas @(modeEditionType ? "fa-save" : "fa-plus") me-2"></i>
+                        }
+                        @(isSubmittingType ? (modeEditionType ? "Modification..." : "Ajout...") : (modeEditionType ? "Modifier" : "Ajouter"))
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- MODAL SUPPRESSION MARQUE -->
+@if (showModalSuppressionMarque && marqueASupprimer != null)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirmer la suppression
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FermerModalSuppressionMarque"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-trademark fa-4x text-danger mb-3"></i>
+                        <p class="lead">Êtes-vous sûr de vouloir supprimer la marque :</p>
+                        <p class="fw-bold fs-5 text-danger">"@marqueASupprimer.Nom"</p>
+                        <p class="text-muted">Cette action est irréversible.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="FermerModalSuppressionMarque">Annuler</button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmerSuppressionMarque" disabled="@isSubmittingSuppressionMarque">
+                        @if (isSubmittingSuppressionMarque)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        else
+                        {
+                            <i class="fas fa-trash me-2"></i>
+                        }
+                        @(isSubmittingSuppressionMarque ? "Suppression..." : "Supprimer définitivement")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- MODAL SUPPRESSION TYPE -->
+@if (showModalSuppressionType && typeASupprimer != null)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirmer la suppression
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="FermerModalSuppressionType"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-tags fa-4x text-danger mb-3"></i>
+                        <p class="lead">Êtes-vous sûr de vouloir supprimer le type de produit :</p>
+                        <p class="fw-bold fs-5 text-danger">"@typeASupprimer.Nom"</p>
+                        <p class="text-muted">Cette action est irréversible.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="FermerModalSuppressionType">Annuler</button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmerSuppressionType" disabled="@isSubmittingSuppressionType">
+                        @if (isSubmittingSuppressionType)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        else
+                        {
+                            <i class="fas fa-trash me-2"></i>
+                        }
+                        @(isSubmittingSuppressionType ? "Suppression..." : "Supprimer définitivement")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // Données
+    private IEnumerable<Marque>? marques;
+    private IEnumerable<TypeProduit>? typesProduit;
+
+    // Variables pour les modals des marques
+    private bool showModalMarque = false;
+    private bool modeEditionMarque = false;
+    private Marque marqueEnCours = new Marque();
+    private string errorMessageMarque = "";
+    private bool isSubmittingMarque = false;
+
+    // Variables pour les modals des types
+    private bool showModalType = false;
+    private bool modeEditionType = false;
+    private TypeProduit typeEnCours = new TypeProduit();
+    private string errorMessageType = "";
+    private bool isSubmittingType = false;
+
+    // Variables pour la suppression
+    private bool showModalSuppressionMarque = false;
+    private bool showModalSuppressionType = false;
+    private Marque? marqueASupprimer;
+    private TypeProduit? typeASupprimer;
+    private bool isSubmittingSuppressionMarque = false;
+    private bool isSubmittingSuppressionType = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ChargerDonnees();
+    }
+
+    private async Task ChargerDonnees()
+    {
+        try
+        {
+            marques = await WSMarque.GetAllAsync();
+            typesProduit = await WSTypeProduit.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors du chargement des données : {ex.Message}");
+        }
+    }
+
+    // MÉTHODES MARQUES
+    private void OuvrirModalAjoutMarque()
+    {
+        modeEditionMarque = false;
+        marqueEnCours = new Marque();
+        errorMessageMarque = "";
+        showModalMarque = true;
+        StateHasChanged();
+    }
+
+    private void ModifierMarque(Marque marque)
+    {
+        modeEditionMarque = true;
+        marqueEnCours = new Marque
+        {
+            IdMarque = marque.IdMarque,
+            Nom = marque.Nom,
+            NbProduits = marque.NbProduits
+        };
+        errorMessageMarque = "";
+        showModalMarque = true;
+        StateHasChanged();
+    }
+
+    private void FermerModalMarque()
+    {
+        showModalMarque = false;
+        modeEditionMarque = false;
+        marqueEnCours = new Marque();
+        errorMessageMarque = "";
+        isSubmittingMarque = false;
+        StateHasChanged();
+    }
+
+    private async Task ValiderMarque()
+    {
+        isSubmittingMarque = true;
+        errorMessageMarque = "";
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(marqueEnCours.Nom))
+            {
+                errorMessageMarque = "Le nom de la marque est obligatoire.";
+                return;
+            }
+
+            var marqueExistante = marques?.FirstOrDefault(m =>
+                m.Nom?.Equals(marqueEnCours.Nom, StringComparison.OrdinalIgnoreCase) == true &&
+                m.IdMarque != marqueEnCours.IdMarque);
+
+            if (marqueExistante != null)
+            {
+                errorMessageMarque = "Cette marque existe déjà.";
+                return;
+            }
+
+            if (modeEditionMarque)
+            {
+                await WSMarque.UpdateAsync(marqueEnCours.IdMarque, marqueEnCours);
+            }
+            else
+            {
+                await WSMarque.AddAsync(marqueEnCours);
+            }
+
+            await ChargerDonnees();
+            FermerModalMarque();
+        }
+        catch (Exception ex)
+        {
+            errorMessageMarque = $"Erreur : {ex.Message}";
+        }
+        finally
+        {
+            isSubmittingMarque = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SupprimerMarque(Marque marque)
+    {
+        marqueASupprimer = marque;
+        showModalSuppressionMarque = true;
+        StateHasChanged();
+    }
+
+    private void FermerModalSuppressionMarque()
+    {
+        showModalSuppressionMarque = false;
+        marqueASupprimer = null;
+        isSubmittingSuppressionMarque = false;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmerSuppressionMarque()
+    {
+        if (marqueASupprimer == null) return;
+
+        isSubmittingSuppressionMarque = true;
+
+        try
+        {
+            await WSMarque.DeleteAsync(marqueASupprimer.IdMarque);
+            await ChargerDonnees();
+            FermerModalSuppressionMarque();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la suppression : {ex.Message}");
+        }
+        finally
+        {
+            isSubmittingSuppressionMarque = false;
+            StateHasChanged();
+        }
+    }
+
+    // MÉTHODES TYPES
+    private void OuvrirModalAjoutType()
+    {
+        modeEditionType = false;
+        typeEnCours = new TypeProduit();
+        errorMessageType = "";
+        showModalType = true;
+        StateHasChanged();
+    }
+
+    private void ModifierType(TypeProduit type)
+    {
+        modeEditionType = true;
+        typeEnCours = new TypeProduit
+        {
+            IdTypeProduit = type.IdTypeProduit,
+            Nom = type.Nom,
+            NbProduits = type.NbProduits
+        };
+        errorMessageType = "";
+        showModalType = true;
+        StateHasChanged();
+    }
+
+    private void FermerModalType()
+    {
+        showModalType = false;
+        modeEditionType = false;
+        typeEnCours = new TypeProduit();
+        errorMessageType = "";
+        isSubmittingType = false;
+        StateHasChanged();
+    }
+
+    private async Task ValiderType()
+    {
+        isSubmittingType = true;
+        errorMessageType = "";
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(typeEnCours.Nom))
+            {
+                errorMessageType = "Le nom du type de produit est obligatoire.";
+                return;
+            }
+
+            var typeExistant = typesProduit?.FirstOrDefault(t =>
+                t.Nom?.Equals(typeEnCours.Nom, StringComparison.OrdinalIgnoreCase) == true &&
+                t.IdTypeProduit != typeEnCours.IdTypeProduit);
+
+            if (typeExistant != null)
+            {
+                errorMessageType = "Ce type de produit existe déjà.";
+                return;
+            }
+
+            if (modeEditionType)
+            {
+                await WSTypeProduit.UpdateAsync(typeEnCours.IdTypeProduit, typeEnCours);
+            }
+            else
+            {
+                await WSTypeProduit.AddAsync(typeEnCours);
+            }
+
+            await ChargerDonnees();
+            FermerModalType();
+        }
+        catch (Exception ex)
+        {
+            errorMessageType = $"Erreur : {ex.Message}";
+        }
+        finally
+        {
+            isSubmittingType = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SupprimerType(TypeProduit type)
+    {
+        typeASupprimer = type;
+        showModalSuppressionType = true;
+        StateHasChanged();
+    }
+
+    private void FermerModalSuppressionType()
+    {
+        showModalSuppressionType = false;
+        typeASupprimer = null;
+        isSubmittingSuppressionType = false;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmerSuppressionType()
+    {
+        if (typeASupprimer == null) return;
+
+        isSubmittingSuppressionType = true;
+
+        try
+        {
+            await WSTypeProduit.DeleteAsync(typeASupprimer.IdTypeProduit);
+            await ChargerDonnees();
+            FermerModalSuppressionType();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la suppression : {ex.Message}");
+        }
+        finally
+        {
+            isSubmittingSuppressionType = false;
+            StateHasChanged();
+        }
+    }
+}

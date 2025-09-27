@@ -21,6 +21,9 @@ namespace WebApplication
             // Service spécialisé pour les produits
             builder.Services.AddScoped<IProduitService, ProduitService>();
 
+            //Service de notification
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+
             // Services génériques pour les autres entités
             builder.Services.AddScoped<IGenericService<Marque>, WebServiceGenerique<Marque>>();
             builder.Services.AddScoped<IGenericService<TypeProduit>, WebServiceGenerique<TypeProduit>>();
