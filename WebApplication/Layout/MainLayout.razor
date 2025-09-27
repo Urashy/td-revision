@@ -1,4 +1,9 @@
 ﻿@inherits LayoutComponentBase
+@inject INotificationService NotificationService
+@using WebApplication.Models
+@using WebApplication.Services
+@implements IDisposable
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -36,42 +41,24 @@
 }
 
 @code {
-    public enum ToastType
+    private List<NotificationMessage> toastMessages = new();
+
+    protected override void OnInitialized()
     {
-        Success,
-        Error,
-        Warning,
-        Info
+        NotificationService.OnNotificationReceived += HandleNotification;
     }
 
-    public class ToastMessage
+    private void HandleNotification(NotificationMessage notification)
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-        public string Message { get; set; } = "";
-        public ToastType Type { get; set; }
-        public DateTime Timestamp { get; set; } = DateTime.Now;
-    }
-
-    private List<ToastMessage> toastMessages = new();
-    private Timer? autoRemoveTimer;
-
-    public void ShowToast(string message, ToastType type = ToastType.Info, int durationMs = 4000)
-    {
-        var toast = new ToastMessage
-        {
-            Message = message,
-            Type = type
-        };
-
-        toastMessages.Add(toast);
+        toastMessages.Add(notification);
         StateHasChanged();
 
         // Auto-remove after specified duration
-        Task.Delay(durationMs).ContinueWith(_ =>
+        Task.Delay(notification.DurationMs).ContinueWith(_ =>
         {
             InvokeAsync(() =>
             {
-                RemoveToast(toast.Id);
+                RemoveToast(notification.Id);
             });
         });
     }
@@ -86,30 +73,35 @@
         }
     }
 
-    private string GetToastClass(ToastType type) => type switch
+    private string GetToastClass(NotificationType type) => type switch
     {
-        ToastType.Success => "bg-success text-white",
-        ToastType.Error => "bg-danger text-white",
-        ToastType.Warning => "bg-warning text-dark",
-        ToastType.Info => "bg-info text-white",
+        NotificationType.Success => "bg-success text-white",
+        NotificationType.Error => "bg-danger text-white",
+        NotificationType.Warning => "bg-warning text-dark",
+        NotificationType.Info => "bg-info text-white",
         _ => "bg-light"
     };
 
-    private string GetToastIcon(ToastType type) => type switch
+    private string GetToastIcon(NotificationType type) => type switch
     {
-        ToastType.Success => "fas fa-check-circle text-white",
-        ToastType.Error => "fas fa-exclamation-circle text-white",
-        ToastType.Warning => "fas fa-exclamation-triangle text-dark",
-        ToastType.Info => "fas fa-info-circle text-white",
+        NotificationType.Success => "fas fa-check-circle text-white",
+        NotificationType.Error => "fas fa-exclamation-circle text-white",
+        NotificationType.Warning => "fas fa-exclamation-triangle text-dark",
+        NotificationType.Info => "fas fa-info-circle text-white",
         _ => "fas fa-bell"
     };
 
-    private string GetToastTitle(ToastType type) => type switch
+    private string GetToastTitle(NotificationType type) => type switch
     {
-        ToastType.Success => "Succès",
-        ToastType.Error => "Erreur",
-        ToastType.Warning => "Attention",
-        ToastType.Info => "Information",
+        NotificationType.Success => "Succès",
+        NotificationType.Error => "Erreur",
+        NotificationType.Warning => "Attention",
+        NotificationType.Info => "Information",
         _ => "Notification"
     };
+
+    public void Dispose()
+    {
+        NotificationService.OnNotificationReceived -= HandleNotification;
+    }
 }

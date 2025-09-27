@@ -1,6 +1,8 @@
 ﻿@page "/references"
 @inject IGenericService<Marque> WSMarque
 @inject IGenericService<TypeProduit> WSTypeProduit
+@inject INotificationService NotificationService
+@inject HttpClient HttpClient
 @using WebApplication.Models
 @using WebApplication.Services
 
@@ -71,8 +73,7 @@
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                     <button class="btn btn-sm btn-outline-danger"
-                                                            @onclick="() => SupprimerMarque(marque)"
-                                                            disabled="@(marque.NbProduits > 0)">
+                                                            @onclick="() => SupprimerMarque(marque)">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
@@ -139,8 +140,7 @@
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                     <button class="btn btn-sm btn-outline-danger"
-                                                            @onclick="() => SupprimerType(type)"
-                                                            disabled="@(type.NbProduits > 0)">
+                                                            @onclick="() => SupprimerType(type)">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
@@ -279,6 +279,15 @@
                         <i class="fas fa-trademark fa-4x text-danger mb-3"></i>
                         <p class="lead">Êtes-vous sûr de vouloir supprimer la marque :</p>
                         <p class="fw-bold fs-5 text-danger">"@marqueASupprimer.Nom"</p>
+
+                        @if (nombreProduitsMarque > 0)
+                        {
+                            <div class="alert alert-warning mt-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Attention :</strong> @nombreProduitsMarque produit(s) seront également supprimé(s) !
+                            </div>
+                        }
+
                         <p class="text-muted">Cette action est irréversible.</p>
                     </div>
                 </div>
@@ -319,6 +328,15 @@
                         <i class="fas fa-tags fa-4x text-danger mb-3"></i>
                         <p class="lead">Êtes-vous sûr de vouloir supprimer le type de produit :</p>
                         <p class="fw-bold fs-5 text-danger">"@typeASupprimer.Nom"</p>
+
+                        @if (nombreProduitsType > 0)
+                        {
+                            <div class="alert alert-warning mt-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Attention :</strong> @nombreProduitsType produit(s) seront également supprimé(s) !
+                            </div>
+                        }
+
                         <p class="text-muted">Cette action est irréversible.</p>
                     </div>
                 </div>
@@ -367,6 +385,8 @@
     private TypeProduit? typeASupprimer;
     private bool isSubmittingSuppressionMarque = false;
     private bool isSubmittingSuppressionType = false;
+    private int nombreProduitsMarque = 0;
+    private int nombreProduitsType = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -383,6 +403,7 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Erreur lors du chargement des données : {ex.Message}");
+            NotificationService.ShowError("Erreur lors du chargement des données");
         }
     }
 
@@ -446,10 +467,12 @@
             if (modeEditionMarque)
             {
                 await WSMarque.UpdateAsync(marqueEnCours.IdMarque, marqueEnCours);
+                NotificationService.ShowSuccess("Marque modifiée avec succès");
             }
             else
             {
                 await WSMarque.AddAsync(marqueEnCours);
+                NotificationService.ShowSuccess("Marque ajoutée avec succès");
             }
 
             await ChargerDonnees();
@@ -458,6 +481,7 @@
         catch (Exception ex)
         {
             errorMessageMarque = $"Erreur : {ex.Message}";
+            NotificationService.ShowError("Erreur lors de l'opération");
         }
         finally
         {
@@ -466,11 +490,31 @@
         }
     }
 
-    private void SupprimerMarque(Marque marque)
+    private async Task SupprimerMarque(Marque marque)
     {
-        marqueASupprimer = marque;
-        showModalSuppressionMarque = true;
-        StateHasChanged();
+        try
+        {
+            // Récupérer le nombre de produits liés à cette marque
+            var response = await HttpClient.GetAsync($"api/Marque/GetProduitsCount/{marque.IdMarque}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                nombreProduitsMarque = int.Parse(content);
+            }
+            else
+            {
+                nombreProduitsMarque = 0;
+            }
+
+            marqueASupprimer = marque;
+            showModalSuppressionMarque = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la récupération du nombre de produits : {ex.Message}");
+            NotificationService.ShowError("Erreur lors de la préparation de la suppression");
+        }
     }
 
     private void FermerModalSuppressionMarque()
@@ -478,6 +522,7 @@
         showModalSuppressionMarque = false;
         marqueASupprimer = null;
         isSubmittingSuppressionMarque = false;
+        nombreProduitsMarque = 0;
         StateHasChanged();
     }
 
@@ -492,10 +537,20 @@
             await WSMarque.DeleteAsync(marqueASupprimer.IdMarque);
             await ChargerDonnees();
             FermerModalSuppressionMarque();
+
+            if (nombreProduitsMarque > 0)
+            {
+                NotificationService.ShowSuccess($"Marque et {nombreProduitsMarque} produit(s) supprimé(s) avec succès");
+            }
+            else
+            {
+                NotificationService.ShowSuccess("Marque supprimée avec succès");
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Erreur lors de la suppression : {ex.Message}");
+            NotificationService.ShowError("Erreur lors de la suppression");
         }
         finally
         {
@@ -564,10 +619,12 @@
             if (modeEditionType)
             {
                 await WSTypeProduit.UpdateAsync(typeEnCours.IdTypeProduit, typeEnCours);
+                NotificationService.ShowSuccess("Type de produit modifié avec succès");
             }
             else
             {
                 await WSTypeProduit.AddAsync(typeEnCours);
+                NotificationService.ShowSuccess("Type de produit ajouté avec succès");
             }
 
             await ChargerDonnees();
@@ -576,6 +633,7 @@
         catch (Exception ex)
         {
             errorMessageType = $"Erreur : {ex.Message}";
+            NotificationService.ShowError("Erreur lors de l'opération");
         }
         finally
         {
@@ -584,11 +642,31 @@
         }
     }
 
-    private void SupprimerType(TypeProduit type)
+    private async Task SupprimerType(TypeProduit type)
     {
-        typeASupprimer = type;
-        showModalSuppressionType = true;
-        StateHasChanged();
+        try
+        {
+            // Récupérer le nombre de produits liés à ce type
+            var response = await HttpClient.GetAsync($"api/TypeProduit/GetProduitsCount/{type.IdTypeProduit}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                nombreProduitsType = int.Parse(content);
+            }
+            else
+            {
+                nombreProduitsType = 0;
+            }
+
+            typeASupprimer = type;
+            showModalSuppressionType = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la récupération du nombre de produits : {ex.Message}");
+            NotificationService.ShowError("Erreur lors de la préparation de la suppression");
+        }
     }
 
     private void FermerModalSuppressionType()
@@ -596,6 +674,7 @@
         showModalSuppressionType = false;
         typeASupprimer = null;
         isSubmittingSuppressionType = false;
+        nombreProduitsType = 0;
         StateHasChanged();
     }
 
@@ -610,10 +689,20 @@
             await WSTypeProduit.DeleteAsync(typeASupprimer.IdTypeProduit);
             await ChargerDonnees();
             FermerModalSuppressionType();
+
+            if (nombreProduitsType > 0)
+            {
+                NotificationService.ShowSuccess($"Type de produit et {nombreProduitsType} produit(s) supprimé(s) avec succès");
+            }
+            else
+            {
+                NotificationService.ShowSuccess("Type de produit supprimé avec succès");
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Erreur lors de la suppression : {ex.Message}");
+            NotificationService.ShowError("Erreur lors de la suppression");
         }
         finally
         {

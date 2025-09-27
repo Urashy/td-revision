@@ -1,35 +1,26 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using WebApplication.Models;
+using WebApplication;
 using WebApplication.Services;
+using WebApplication.Models;
 
-namespace WebApplication
-{
-    public class Program
-    {
-        public static async Task Main(string[] args)
-        {
-            var builder = WebAssemblyHostBuilder.CreateDefault(args);
-            builder.RootComponents.Add<App>("#app");
-            builder.RootComponents.Add<HeadOutlet>("head::after");
+var builder = WebAssemblyHostBuilder.CreateDefault(args);
+builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
 
-            builder.Services.AddScoped(sp => new HttpClient
-            {
-                BaseAddress = new Uri("http://localhost:5049/")
-            });
+// Configuration HttpClient
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5049/") });
 
-            // Service spécialisé pour les produits
-            builder.Services.AddScoped<IProduitService, ProduitService>();
+// Services génériques
+builder.Services.AddScoped<IGenericService<Produit>, WebServiceGenerique<Produit>>();
+builder.Services.AddScoped<IGenericService<Marque>, WebServiceGenerique<Marque>>();
+builder.Services.AddScoped<IGenericService<TypeProduit>, WebServiceGenerique<TypeProduit>>();
+builder.Services.AddScoped<IGenericService<Image>, WebServiceGenerique<Image>>();
 
-            //Service de notification
-            builder.Services.AddScoped<INotificationService, NotificationService>();
+// Service de produits spécialisé
+builder.Services.AddScoped<IProduitService, ProduitService>();
 
-            // Services génériques pour les autres entités
-            builder.Services.AddScoped<IGenericService<Marque>, WebServiceGenerique<Marque>>();
-            builder.Services.AddScoped<IGenericService<TypeProduit>, WebServiceGenerique<TypeProduit>>();
-            builder.Services.AddScoped<IGenericService<Image>, WebServiceGenerique<Image>>();
+// Service de notification (SINGLETON pour persister les notifications dans toute l'application)
+builder.Services.AddSingleton<INotificationService, NotificationService>();
 
-            await builder.Build().RunAsync();
-        }
-    }
-}
+await builder.Build().RunAsync();
