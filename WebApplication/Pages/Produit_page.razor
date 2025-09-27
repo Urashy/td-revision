@@ -638,6 +638,15 @@ else
 
         try
         {
+            if (imagesProduits.TryGetValue(produitASupprimer.Value.id, out var images))
+            {
+                foreach (var image in images)
+                {
+                    await WSImage.DeleteAsync(image.Id);
+                }
+            }
+
+
             await WSProduit.DeleteAsync(produitASupprimer.Value.id);
 
             // Recharger les données
