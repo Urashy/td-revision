@@ -44,8 +44,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// IMPORTANT : L'ordre est crucial !
-app.UseCors("AllowBlazorClient"); // CORS avant UseAuthorization
+
+app.UseCors("AllowBlazorClient");
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();

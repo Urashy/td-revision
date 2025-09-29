@@ -7,17 +7,13 @@ using td_revision.Models.Repository;
 namespace td_revision.Controllers
 {
     [Route("api/[controller]/[action]")]
-    public class ImageController : ControllerGenerique<Image, ImageDTO>
+    public class ImageController : ControllerBase
     {
         public ImageController(IMapper mapper, IDataRepository<Image> dataRepository)
             : base(mapper, dataRepository)
         {
         }
 
-        protected override object GetEntityId(Image entity)
-        {
-            return entity.IdImage;
-        }
 
         // Méthode spécifique pour récupérer les images par IdProduit
         [HttpGet("{produitId}")]

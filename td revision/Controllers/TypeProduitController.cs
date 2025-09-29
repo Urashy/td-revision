@@ -13,12 +13,14 @@ namespace td_revision.Controllers
         private readonly IMapper _mapper;
         private readonly IDataRepository<TypeProduit> _typeProduitRepository;
         private readonly IDataRepository<Produit> _produitRepository;
+        private readonly IDataRepository<Image> _imageRepository;
 
-        public TypeProduitController(IMapper mapper, IDataRepository<TypeProduit> typeProduitRepository, IDataRepository<Produit> produitRepository)
+        public TypeProduitController(IMapper mapper, IDataRepository<TypeProduit> typeProduitRepository, IDataRepository<Produit> produitRepository , IDataRepository<Image> imageRepository)
         {
             _mapper = mapper;
             _typeProduitRepository = typeProduitRepository;
             _produitRepository = produitRepository;
+            _imageRepository = imageRepository;
         }
 
         [HttpGet("{id}")]
@@ -116,6 +118,20 @@ namespace td_revision.Controllers
                 if (allProducts.Value != null)
                 {
                     var produitsASupprimer = allProducts.Value.Where(p => p.IdTypeProduit == id).ToList();
+
+
+                    var allimage = await _imageRepository.GetAllAsync();
+
+                    if (allimage.Value != null)
+                    {
+                        var imagesASupprimer = allimage.Value.Where(i => produitsASupprimer.Any(p => p.IdProduit == i.IdProduit)).ToList();
+                        foreach (var image in imagesASupprimer)
+                        {
+                            await _imageRepository.DeleteAsync(image);
+                        }
+                    }
+
+
 
                     // 2. Supprimer tous les produits liés à ce type
                     foreach (var produit in produitsASupprimer)

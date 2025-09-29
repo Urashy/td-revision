@@ -13,12 +13,14 @@ namespace td_revision.Controllers
         private readonly IMapper _mapper;
         private readonly IDataRepository<Marque> _marqueRepository;
         private readonly IDataRepository<Produit> _produitRepository;
+        private readonly IDataRepository<Image> _imageRepository;
 
-        public MarqueController(IMapper mapper, IDataRepository<Marque> marqueRepository, IDataRepository<Produit> produitRepository)
+        public MarqueController(IMapper mapper, IDataRepository<Marque> marqueRepository, IDataRepository<Produit> produitRepository, IDataRepository<Image> imageRepository)
         {
             _mapper = mapper;
             _marqueRepository = marqueRepository;
             _produitRepository = produitRepository;
+            _imageRepository = imageRepository;
         }
 
         [HttpGet("{id}")]
@@ -116,6 +118,18 @@ namespace td_revision.Controllers
                 if (allProducts.Value != null)
                 {
                     var produitsASupprimer = allProducts.Value.Where(p => p.IdMarque == id).ToList();
+
+                    var allimage = await _imageRepository.GetAllAsync();
+
+                    if (allimage.Value != null)
+                    {
+                        var imagesASupprimer = allimage.Value.Where(i => produitsASupprimer.Any(p => p.IdProduit == i.IdProduit)).ToList();
+                        foreach (var image in imagesASupprimer)
+                        {
+                            await _imageRepository.DeleteAsync(image);
+                        }
+                    }
+
 
                     // 2. Supprimer tous les produits liés à cette marque
                     foreach (var produit in produitsASupprimer)
