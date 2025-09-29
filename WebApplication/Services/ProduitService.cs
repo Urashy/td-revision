@@ -4,7 +4,7 @@ using WebApplication.Models;
 
 namespace WebApplication.Services
 {
-    public class ProduitService : IProduitService
+    public class ProduitService : IService<Produit>
     {
         private readonly HttpClient _httpClient;
         private const string ControllerName = "Produit";
@@ -18,7 +18,9 @@ namespace WebApplication.Services
             }
         }
 
-        public async Task<IEnumerable<ProduitSimple>> GetAllSimpleAsync()
+        #region IService<Produit> Implementation
+
+        public async Task<List<Produit>?> GetAllAsync()
         {
             try
             {
@@ -32,9 +34,19 @@ namespace WebApplication.Services
                     var content = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"Response content: {content}");
 
-                    // Le serveur retourne ProduitDTO, on le map vers ProduitSimple
-                    var produitsDtos = await response.Content.ReadFromJsonAsync<IEnumerable<ProduitSimple>>();
-                    return produitsDtos ?? new List<ProduitSimple>();
+                    // Désérialiser en List<ProduitSimple> puis convertir en List<Produit>
+                    var produitsSimples = await response.Content.ReadFromJsonAsync<List<ProduitSimple>>();
+
+                    // Conversion ProduitSimple -> Produit
+                    var produits = produitsSimples?.Select(ps => new Produit
+                    {
+                        IdProduit = ps.IdProduit,
+                        Nom = ps.Nom,
+                        Type = ps.Type,
+                        Marque = ps.Marque
+                    }).ToList();
+
+                    return produits ?? new List<Produit>();
                 }
                 else
                 {
@@ -45,12 +57,12 @@ namespace WebApplication.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erreur GetAllSimpleAsync : {ex.Message}");
+                Console.WriteLine($"Erreur GetAllAsync : {ex.Message}");
                 throw;
             }
         }
 
-        public async Task<Produit> GetByIdDetailAsync(int id)
+        public async Task<Produit?> GetByIdAsync(int id)
         {
             try
             {
@@ -75,12 +87,12 @@ namespace WebApplication.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erreur GetByIdDetailAsync : {ex.Message}");
+                Console.WriteLine($"Erreur GetByIdAsync : {ex.Message}");
                 throw;
             }
         }
 
-        public async Task<Produit> GetByNameDetailAsync(string name)
+        public async Task<Produit?> GetByNameAsync(string name)
         {
             try
             {
@@ -105,7 +117,7 @@ namespace WebApplication.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erreur GetByNameDetailAsync : {ex.Message}");
+                Console.WriteLine($"Erreur GetByNameAsync : {ex.Message}");
                 throw;
             }
         }
@@ -138,17 +150,18 @@ namespace WebApplication.Services
             }
         }
 
-        public async Task UpdateAsync(int id, Produit entity)
+        public async Task UpdateAsync(Produit updatedEntity)
         {
             try
             {
+                var id = updatedEntity.IdProduit;
                 var url = $"api/{ControllerName}/Update/{id}";
                 Console.WriteLine($"PUT Request URL: {_httpClient.BaseAddress}{url}");
 
-                var json = JsonSerializer.Serialize(entity, new JsonSerializerOptions { WriteIndented = true });
+                var json = JsonSerializer.Serialize(updatedEntity, new JsonSerializerOptions { WriteIndented = true });
                 Console.WriteLine($"Payload: {json}");
 
-                var response = await _httpClient.PutAsJsonAsync(url, entity);
+                var response = await _httpClient.PutAsJsonAsync(url, updatedEntity);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -191,11 +204,86 @@ namespace WebApplication.Services
             }
         }
 
-        public async Task<IEnumerable<ProduitSimple>> GetFilteredAsync(string? searchTerm, string? marque, string? type)
+        #endregion
+
+        #region Méthodes d'extension spécifiques (non dans l'interface)
+
+        /// <summary>
+        /// Récupère tous les produits en version simplifiée
+        /// </summary>
+        public async Task<IEnumerable<ProduitSimple>> GetAllSimpleAsync()
         {
-            var url = $"api/produits/GetFiltered?searchTerm={searchTerm}&marque={marque}&type={type}";
-            return await _httpClient.GetFromJsonAsync<IEnumerable<ProduitSimple>>(url) ?? new List<ProduitSimple>();
+            try
+            {
+                var url = $"api/{ControllerName}/GetAll";
+                Console.WriteLine($"GET Request URL: {_httpClient.BaseAddress}{url}");
+
+                var response = await _httpClient.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var produitsDtos = await response.Content.ReadFromJsonAsync<IEnumerable<ProduitSimple>>();
+                    return produitsDtos ?? new List<ProduitSimple>();
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error response: {response.StatusCode} - {errorContent}");
+                    throw new HttpRequestException($"Erreur {response.StatusCode}: {errorContent}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erreur GetAllSimpleAsync : {ex.Message}");
+                throw;
+            }
         }
 
+        /// <summary>
+        /// Récupère les produits filtrés via l'API
+        /// </summary>
+        public async Task<IEnumerable<ProduitSimple>> GetFilteredAsync(string? searchTerm = null, string? marque = null, string? type = null)
+        {
+            try
+            {
+                // Construction de l'URL avec les paramètres de query
+                var queryParams = new List<string>();
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                    queryParams.Add($"searchTerm={Uri.EscapeDataString(searchTerm)}");
+
+                if (!string.IsNullOrEmpty(marque))
+                    queryParams.Add($"marque={Uri.EscapeDataString(marque)}");
+
+                if (!string.IsNullOrEmpty(type))
+                    queryParams.Add($"type={Uri.EscapeDataString(type)}");
+
+                var queryString = queryParams.Any() ? "?" + string.Join("&", queryParams) : "";
+                var url = $"api/{ControllerName}/GetFiltered{queryString}";
+
+                Console.WriteLine($"GET Request URL: {_httpClient.BaseAddress}{url}");
+
+                var response = await _httpClient.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var produits = await response.Content.ReadFromJsonAsync<IEnumerable<ProduitSimple>>();
+                    return produits ?? new List<ProduitSimple>();
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Error response: {response.StatusCode} - {errorContent}");
+                    throw new HttpRequestException($"Erreur {response.StatusCode}: {errorContent}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erreur GetFilteredAsync : {ex.Message}");
+                throw;
+            }
+        }
+
+        #endregion
     }
 }

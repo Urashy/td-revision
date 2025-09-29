@@ -1,5 +1,5 @@
 ﻿@page "/produits/ajouter"
-@inject IProduitService WSProduit
+@inject IService<Produit> WSProduit
 @inject IGenericService<Marque> WSMarque
 @inject IGenericService<TypeProduit> WSTypeProduit
 @inject IGenericService<Image> WSImage
@@ -543,7 +543,7 @@
             Console.WriteLine("Produit ajouté avec succès");
 
             // Récupérer le produit créé pour obtenir son ID
-            var produitCree = await WSProduit.GetByNameDetailAsync(nouveauProduit.Nom);
+            var produitCree = await WSProduit.GetByNameAsync(nouveauProduit.Nom);
 
             if (produitCree != null)
             {

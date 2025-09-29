@@ -1,5 +1,5 @@
 ﻿@page "/produits"
-@inject IProduitService WSProduit
+@inject IService<Produit> WSProduit
 @inject IGenericService<Marque> WSMarque
 @inject IGenericService<TypeProduit> WSTypeProduit
 @inject IGenericService<Image> WSImage
@@ -416,7 +416,6 @@ else
         border: 1px solid #dee2e6;
     }
 </style>
-
 @code {
     // Listes de données
     private IEnumerable<ProduitSimple>? produits;
@@ -434,7 +433,7 @@ else
         set
         {
             selectedType = value;
-            ApplyFilters();
+            _ = ApplyFilters();
         }
     }
 
@@ -445,7 +444,7 @@ else
         set
         {
             selectedMarque = value;
-            ApplyFilters();
+            _ = ApplyFilters();
         }
     }
 
@@ -463,20 +462,16 @@ else
     private bool isSubmittingEdit = false;
     private bool isSubmittingDelete = false;
 
+    // Cast pour accéder aux méthodes spécifiques de ProduitService
+    private ProduitService ProduitService => (ProduitService)WSProduit;
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
             await LoadFilteredProduits();
-
-            // Charger les données de référence
             await ChargerDonneesReferences();
-
-            // Charger les images
             await LoadProductImages();
-
-            // Appliquer les filtres initiaux
-            ApplyFilters();
         }
         catch (Exception ex)
         {
@@ -484,26 +479,16 @@ else
         }
     }
 
-    private void ApplyFilters() 
-    { 
-        if (produits == null) 
-        { 
-            produitsFiltres = new List<ProduitSimple>(); 
-            return; 
-        } 
-        produitsFiltres = produits.Where(p => (string.IsNullOrEmpty(searchNom) || 
-            (p.Nom?.Contains(searchNom, StringComparison.OrdinalIgnoreCase) ?? false)) && 
-            (string.IsNullOrEmpty(selectedType) || p.Type == selectedType) && 
-            (string.IsNullOrEmpty(selectedMarque) || p.Marque == selectedMarque)); StateHasChanged(); }
-
+    private async Task ApplyFilters()
+    {
+        await LoadFilteredProduits();
+    }
 
     private async Task ChargerDonneesReferences()
     {
-        // Charger les marques
         var marquesResponse = await WSMarque.GetAllAsync();
         marquesDisponibles = marquesResponse?.ToList() ?? new List<Marque>();
 
-        // Charger les types de produits
         var typesResponse = await WSTypeProduit.GetAllAsync();
         typesDisponibles = typesResponse?.ToList() ?? new List<TypeProduit>();
     }
@@ -513,7 +498,7 @@ else
         try
         {
             var allImages = await WSImage.GetAllAsync();
-            if (allImages != null && produits != null)
+            if (allImages != null && produitsFiltres != null)
             {
                 imagesProduits = allImages
                     .GroupBy(img => img.IdProduit)
@@ -535,12 +520,23 @@ else
 
     private async Task LoadFilteredProduits()
     {
-        produitsFiltres = await WSProduit.GetFilteredAsync(
-            searchNom,
-            string.IsNullOrEmpty(selectedMarque) ? null : selectedMarque,
-            string.IsNullOrEmpty(selectedType) ? null : selectedType
-        );
-        StateHasChanged();
+        try
+        {
+            // Utilise la méthode spécifique GetFilteredAsync via le cast
+            produitsFiltres = await ProduitService.GetFilteredAsync(
+                searchTerm: string.IsNullOrEmpty(searchNom) ? null : searchNom,
+                marque: string.IsNullOrEmpty(selectedMarque) ? null : selectedMarque,
+                type: string.IsNullOrEmpty(selectedType) ? null : selectedType
+            );
+
+            produits = produitsFiltres;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur LoadFilteredProduits: {ex.Message}");
+            produitsFiltres = new List<ProduitSimple>();
+        }
     }
 
     private async Task ClearFilters()
@@ -556,10 +552,8 @@ else
     {
         try
         {
-            produitSelectionne = await WSProduit.GetByIdDetailAsync(produitId);
+            produitSelectionne = await WSProduit.GetByIdAsync(produitId);
             Console.WriteLine($"Produit sélectionné pour détails : {produitSelectionne?.Nom}");
-            Console.WriteLine($"Produit sélectionné pour détails : {produitSelectionne?.Marque}");
-            Console.WriteLine($"Produit sélectionné pour détails : {produitSelectionne?.Type}");
             showDetailModal = true;
             StateHasChanged();
         }
@@ -580,9 +574,8 @@ else
     {
         try
         {
-            FermerDetailModal(); // Fermer le modal de détails s'il est ouvert
-
-            produitAModifier = await WSProduit.GetByIdDetailAsync(produitId);
+            FermerDetailModal();
+            produitAModifier = await WSProduit.GetByIdAsync(produitId);
             errorMessageEdit = "";
             showEditModal = true;
             StateHasChanged();
@@ -610,11 +603,8 @@ else
 
         try
         {
-            await WSProduit.UpdateAsync(produitAModifier.IdProduit, produitAModifier);
-
-            // Recharger les données
+            await WSProduit.UpdateAsync(produitAModifier);
             await OnInitializedAsync();
-
             FermerEditModal();
         }
         catch (Exception ex)
@@ -660,18 +650,13 @@ else
                 }
             }
 
-
             await WSProduit.DeleteAsync(produitASupprimer.Value.id);
-
-            // Recharger les données
             await OnInitializedAsync();
-
             FermerDeleteModal();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Erreur lors de la suppression : {ex.Message}");
-            // Optionnel : afficher un message d'erreur
         }
         finally
         {

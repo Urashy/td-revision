@@ -18,7 +18,8 @@ builder.Services.AddScoped<IGenericService<TypeProduit>, WebServiceGenerique<Typ
 builder.Services.AddScoped<IGenericService<Image>, WebServiceGenerique<Image>>();
 
 // Service de produits spécialisé
-builder.Services.AddScoped<IProduitService, ProduitService>();
+builder.Services.AddScoped<IService<Produit>, ProduitService>();
+
 
 // Service de notification (SINGLETON pour persister les notifications dans toute l'application)
 builder.Services.AddSingleton<INotificationService, NotificationService>();
