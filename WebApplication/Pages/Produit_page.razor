@@ -467,8 +467,7 @@ else
     {
         try
         {
-            // Charger les produits (version simple pour la liste)
-            produits = await WSProduit.GetAllSimpleAsync();
+            await LoadFilteredProduits();
 
             // Charger les données de référence
             await ChargerDonneesReferences();
@@ -484,6 +483,19 @@ else
             Console.WriteLine($"Erreur lors du chargement : {ex.Message}");
         }
     }
+
+    private void ApplyFilters() 
+    { 
+        if (produits == null) 
+        { 
+            produitsFiltres = new List<ProduitSimple>(); 
+            return; 
+        } 
+        produitsFiltres = produits.Where(p => (string.IsNullOrEmpty(searchNom) || 
+            (p.Nom?.Contains(searchNom, StringComparison.OrdinalIgnoreCase) ?? false)) && 
+            (string.IsNullOrEmpty(selectedType) || p.Type == selectedType) && 
+            (string.IsNullOrEmpty(selectedMarque) || p.Marque == selectedMarque)); StateHasChanged(); }
+
 
     private async Task ChargerDonneesReferences()
     {
@@ -515,37 +527,28 @@ else
         }
     }
 
-    // Méthodes de filtrage
-    private void OnSearchChanged(ChangeEventArgs e)
+    private async Task OnSearchChanged(ChangeEventArgs e)
     {
         searchNom = e.Value?.ToString() ?? "";
-        ApplyFilters();
+        await LoadFilteredProduits();
     }
 
-    private void ApplyFilters()
+    private async Task LoadFilteredProduits()
     {
-        if (produits == null)
-        {
-            produitsFiltres = new List<ProduitSimple>();
-            return;
-        }
-
-        produitsFiltres = produits.Where(p =>
-            (string.IsNullOrEmpty(searchNom) ||
-             (p.Nom?.Contains(searchNom, StringComparison.OrdinalIgnoreCase) ?? false)) &&
-            (string.IsNullOrEmpty(selectedType) || p.Type == selectedType) &&
-            (string.IsNullOrEmpty(selectedMarque) || p.Marque == selectedMarque)
+        produitsFiltres = await WSProduit.GetFilteredAsync(
+            searchNom,
+            string.IsNullOrEmpty(selectedMarque) ? null : selectedMarque,
+            string.IsNullOrEmpty(selectedType) ? null : selectedType
         );
-
         StateHasChanged();
     }
 
-    private void ClearFilters()
+    private async Task ClearFilters()
     {
         searchNom = "";
         selectedType = "";
         selectedMarque = "";
-        ApplyFilters();
+        await LoadFilteredProduits();
     }
 
     // Méthodes pour les modals

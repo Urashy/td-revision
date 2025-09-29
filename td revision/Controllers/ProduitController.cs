@@ -188,5 +188,52 @@ namespace td_revision.Controllers
                 return StatusCode(500, $"Erreur lors de la suppression du produit : {ex.Message}");
             }
         }
+
+        [HttpGet]
+        [ActionName("GetFiltered")]
+        public async Task<ActionResult<IEnumerable<ProduitDTO>>> GetFiltered(
+            [FromQuery] string? searchTerm = null,
+            [FromQuery] string? marque = null,
+            [FromQuery] string? type = null)
+        {
+            try
+            {
+                var entities = await _dataRepository.GetAllAsync();
+                if (entities.Value == null)
+                {
+                    return Ok(new List<ProduitDTO>());
+                }
+
+                var query = entities.Value.AsQueryable();
+
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    query = query.Where(p =>
+                        p.Nom.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                        (p.Description != null && p.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)));
+                }
+
+                // Filtre par marque
+                if (!string.IsNullOrWhiteSpace(marque) && marque != "all")
+                {
+                    query = query.Where(p => p.MarqueProduitNavigation != null &&
+                                            p.MarqueProduitNavigation.Nom == marque);
+                }
+
+                if (!string.IsNullOrWhiteSpace(type) && type != "all")
+                {
+                    query = query.Where(p => p.TypeProduitNavigation != null &&
+                                            p.TypeProduitNavigation.Nom == type);
+                }
+
+
+                var dtos = _mapper.Map<IEnumerable<ProduitDTO>>(query);
+                return Ok(dtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erreur lors du filtrage : {ex.Message}");
+            }
+        }
     }
 }

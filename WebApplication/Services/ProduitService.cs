@@ -190,5 +190,12 @@ namespace WebApplication.Services
                 throw;
             }
         }
+
+        public async Task<IEnumerable<ProduitSimple>> GetFilteredAsync(string? searchTerm, string? marque, string? type)
+        {
+            var url = $"api/produits/GetFiltered?searchTerm={searchTerm}&marque={marque}&type={type}";
+            return await _httpClient.GetFromJsonAsync<IEnumerable<ProduitSimple>>(url) ?? new List<ProduitSimple>();
+        }
+
     }
 }
