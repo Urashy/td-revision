@@ -1,5 +1,5 @@
 ﻿@page "/produits"
-@inject IService<Produit> WSProduit
+@inject IGenericService<Produit> WSProduit
 @inject IGenericService<Marque> WSMarque
 @inject IGenericService<TypeProduit> WSTypeProduit
 @inject IGenericService<Image> WSImage
@@ -603,7 +603,7 @@ else
 
         try
         {
-            await WSProduit.UpdateAsync(produitAModifier);
+            await WSProduit.UpdateAsync(produitAModifier.Id,produitAModifier);
             await OnInitializedAsync();
             FermerEditModal();
         }

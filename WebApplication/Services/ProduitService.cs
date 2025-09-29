@@ -4,7 +4,7 @@ using WebApplication.Models;
 
 namespace WebApplication.Services
 {
-    public class ProduitService : IService<Produit>
+    public class ProduitService : IGenericService<Produit>
     {
         private readonly HttpClient _httpClient;
         private const string ControllerName = "Produit";
@@ -18,9 +18,9 @@ namespace WebApplication.Services
             }
         }
 
-        #region IService<Produit> Implementation
+        #region IGenericService<Produit> Implementation
 
-        public async Task<List<Produit>?> GetAllAsync()
+        public async Task<IEnumerable<Produit>> GetAllAsync()
         {
             try
             {
@@ -34,7 +34,7 @@ namespace WebApplication.Services
                     var content = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"Response content: {content}");
 
-                    // Désérialiser en List<ProduitSimple> puis convertir en List<Produit>
+                    // Désérialiser en List<ProduitSimple> puis convertir en IEnumerable<Produit>
                     var produitsSimples = await response.Content.ReadFromJsonAsync<List<ProduitSimple>>();
 
                     // Conversion ProduitSimple -> Produit
@@ -44,9 +44,9 @@ namespace WebApplication.Services
                         Nom = ps.Nom,
                         Type = ps.Type,
                         Marque = ps.Marque
-                    }).ToList();
+                    }) ?? Enumerable.Empty<Produit>();
 
-                    return produits ?? new List<Produit>();
+                    return produits;
                 }
                 else
                 {
@@ -62,7 +62,7 @@ namespace WebApplication.Services
             }
         }
 
-        public async Task<Produit?> GetByIdAsync(int id)
+        public async Task<Produit> GetByIdAsync(int id)
         {
             try
             {
@@ -73,11 +73,12 @@ namespace WebApplication.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<Produit>();
+                    var produit = await response.Content.ReadFromJsonAsync<Produit>();
+                    return produit ?? throw new InvalidOperationException($"Produit avec ID {id} introuvable");
                 }
                 else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-                    return null;
+                    throw new KeyNotFoundException($"Produit avec ID {id} introuvable");
                 }
                 else
                 {
@@ -92,7 +93,7 @@ namespace WebApplication.Services
             }
         }
 
-        public async Task<Produit?> GetByNameAsync(string name)
+        public async Task<Produit> GetByNameAsync(string name)
         {
             try
             {
@@ -103,11 +104,12 @@ namespace WebApplication.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<Produit>();
+                    var produit = await response.Content.ReadFromJsonAsync<Produit>();
+                    return produit ?? throw new InvalidOperationException($"Produit avec le nom '{name}' introuvable");
                 }
                 else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
-                    return null;
+                    throw new KeyNotFoundException($"Produit avec le nom '{name}' introuvable");
                 }
                 else
                 {
@@ -150,18 +152,17 @@ namespace WebApplication.Services
             }
         }
 
-        public async Task UpdateAsync(Produit updatedEntity)
+        public async Task UpdateAsync(int id, Produit entity)
         {
             try
             {
-                var id = updatedEntity.IdProduit;
                 var url = $"api/{ControllerName}/Update/{id}";
                 Console.WriteLine($"PUT Request URL: {_httpClient.BaseAddress}{url}");
 
-                var json = JsonSerializer.Serialize(updatedEntity, new JsonSerializerOptions { WriteIndented = true });
+                var json = JsonSerializer.Serialize(entity, new JsonSerializerOptions { WriteIndented = true });
                 Console.WriteLine($"Payload: {json}");
 
-                var response = await _httpClient.PutAsJsonAsync(url, updatedEntity);
+                var response = await _httpClient.PutAsJsonAsync(url, entity);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -223,7 +224,7 @@ namespace WebApplication.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var produitsDtos = await response.Content.ReadFromJsonAsync<IEnumerable<ProduitSimple>>();
-                    return produitsDtos ?? new List<ProduitSimple>();
+                    return produitsDtos ?? Enumerable.Empty<ProduitSimple>();
                 }
                 else
                 {
@@ -268,7 +269,7 @@ namespace WebApplication.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var produits = await response.Content.ReadFromJsonAsync<IEnumerable<ProduitSimple>>();
-                    return produits ?? new List<ProduitSimple>();
+                    return produits ?? Enumerable.Empty<ProduitSimple>();
                 }
                 else
                 {
