@@ -126,8 +126,8 @@ else
                                 <img src="@firstImage.UrlPhoto" alt="@firstImage.NomImage"
                                      class="img-fluid rounded mb-2"
                                      style="height: 150px; width: 100%; object-fit: cover;"
-                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                                <div style="display: none; height: 150px; background-color: #f8f9fa; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                                <div style="display: none; height: 150px; background-color: #f8f9fa; border-radius: 4px; align-items: center; justify-content: center;">
                                     <i class="fas fa-image fa-3x text-muted"></i>
                                 </div>
                             }
@@ -137,6 +137,8 @@ else
                                     <i class="fas fa-image fa-3x text-muted"></i>
                                 </div>
                             }
+
+
                         </div>
 
                         <div class="flex-grow-1">
@@ -217,15 +219,54 @@ else
                             <h6 class="fw-bold text-primary">Images</h6>
                             @if (imagesProduits.ContainsKey(produitSelectionne.IdProduit) && imagesProduits[produitSelectionne.IdProduit].Any())
                             {
-                                <div class="row g-2">
-                                    @foreach (var image in imagesProduits[produitSelectionne.IdProduit])
-                                    {
-                                        <div class="col-6">
-                                            <img src="@image.UrlPhoto" alt="@image.NomImage" class="img-fluid rounded" style="height: 100px; object-fit: cover; width: 100%;" />
-                                            <small class="text-muted d-block text-center">@image.NomImage</small>
+                                var images = imagesProduits[produitSelectionne.IdProduit];
+                                @if (images.Count > 1)
+                                {
+                                    <!-- Carrousel pour la modal -->
+                                    <div id="carousel-detail-@produitSelectionne.IdProduit" class="carousel slide" data-bs-ride="carousel">
+                                        <div class="carousel-indicators">
+                                            @for (int i = 0; i < images.Count; i++)
+                                            {
+                                                <button type="button" data-bs-target="#carousel-detail-@produitSelectionne.IdProduit" data-bs-slide-to="@i"
+                                                        class="@(i == 0 ? "active" : "")" aria-current="@(i == 0 ? "true" : "false")"></button>
+                                            }
                                         </div>
-                                    }
-                                </div>
+                                        <div class="carousel-inner rounded">
+                                            @for (int i = 0; i < images.Count; i++)
+                                            {
+                                                var image = images[i];
+                                                <div class="carousel-item @(i == 0 ? "active" : "")">
+                                                    <img src="@image.UrlPhoto" alt="@image.NomImage" class="d-block w-100"
+                                                         style="height: 250px; object-fit: cover;" />
+                                                    <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded">
+                                                        <p class="mb-0">@image.NomImage</p>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel-detail-@produitSelectionne.IdProduit" data-bs-slide="prev">
+                                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                            <span class="visually-hidden">Précédent</span>
+                                        </button>
+                                        <button class="carousel-control-next" type="button" data-bs-target="#carousel-detail-@produitSelectionne.IdProduit" data-bs-slide="next">
+                                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                            <span class="visually-hidden">Suivant</span>
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <!-- Une seule image -->
+                                    <div class="row g-2">
+                                        @foreach (var image in images)
+                                        {
+                                            <div class="col-12">
+                                                <img src="@image.UrlPhoto" alt="@image.NomImage" class="img-fluid rounded" style="height: 250px; object-fit: cover; width: 100%;" />
+                                                <small class="text-muted d-block text-center">@image.NomImage</small>
+                                            </div>
+                                        }
+                                    </div>
+                                }
                             }
                             else
                             {
@@ -415,7 +456,27 @@ else
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         border: 1px solid #dee2e6;
     }
+
+    /* Style pour les carrousels */
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        padding: 10px;
+    }
+
+    .carousel-indicators button {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.7);
+    }
+
+        .carousel-indicators button.active {
+            background-color: #fff;
+        }
 </style>
+
 @code {
     // Listes de données
     private IEnumerable<ProduitSimple>? produits;
@@ -603,7 +664,7 @@ else
 
         try
         {
-            await WSProduit.UpdateAsync(produitAModifier.Id,produitAModifier);
+            await WSProduit.UpdateAsync(produitAModifier.Id, produitAModifier);
             await OnInitializedAsync();
             FermerEditModal();
         }

@@ -74,11 +74,17 @@ namespace td_revision.Controllers
 
         [HttpPost]
         [ActionName("Add")]
-        public async Task<ActionResult<ProduitDetailDTO>> Add([FromBody] ProduitDetailDTO dto)
+        public async Task<ActionResult<ProduitDetailDTO>> Add([FromBody] ProduitPostDTO dto)
         {
             try
             {
-                // 1. Mapper le DTO vers l'entité (sans les IDs de FK)
+                // Validation des stocks
+                if (dto.StockMini > dto.StockMaxi)
+                {
+                    return BadRequest("Le stock minimum ne peut pas être supérieur au stock maximum.");
+                }
+
+                // 1. Mapper le DTO vers l'entité
                 var entity = _mapper.Map<Produit>(dto);
 
                 // 2. Résoudre l'IdMarque à partir du nom

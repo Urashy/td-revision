@@ -31,12 +31,24 @@ namespace td_revision.Mapper
                 .ForMember(dest => dest.Stock, opt => opt.MapFrom(src => src.StockReel))
                 .ForMember(dest => dest.EnReappro, opt => opt.MapFrom(src => src.StockReel < src.StockMini));
 
-            // ========== PRODUITDETAILDTO -> PRODUIT (création) ==========
+            // ========== PRODUITDETAILDTO -> PRODUIT (mise à jour) ==========
             CreateMap<ProduitDetailDTO, Produit>()
                 .ForMember(dest => dest.IdProduit, opt => opt.Ignore())
                 .ForMember(dest => dest.StockReel, opt => opt.MapFrom(src => src.Stock))
-                .ForMember(dest => dest.StockMini, opt => opt.MapFrom(src => 0))
-                .ForMember(dest => dest.StockMaxi, opt => opt.MapFrom(src => 100))
+                .ForMember(dest => dest.StockMini, opt => opt.MapFrom(src => src.StockMini))
+                .ForMember(dest => dest.StockMaxi, opt => opt.MapFrom(src => src.StockMaxi))
+                .ForMember(dest => dest.Images, opt => opt.Ignore())
+                .ForMember(dest => dest.MarqueProduitNavigation, opt => opt.Ignore())
+                .ForMember(dest => dest.TypeProduitNavigation, opt => opt.Ignore())
+                .ForMember(dest => dest.IdMarque, opt => opt.Ignore())
+                .ForMember(dest => dest.IdTypeProduit, opt => opt.Ignore());
+
+            // ========== PRODUITCREATEDTO -> PRODUIT (création) ==========
+            CreateMap<ProduitPostDTO, Produit>()
+                .ForMember(dest => dest.IdProduit, opt => opt.Ignore())
+                .ForMember(dest => dest.StockReel, opt => opt.MapFrom(src => src.Stock))
+                .ForMember(dest => dest.StockMini, opt => opt.MapFrom(src => src.StockMini))
+                .ForMember(dest => dest.StockMaxi, opt => opt.MapFrom(src => src.StockMaxi))
                 .ForMember(dest => dest.Images, opt => opt.Ignore())
                 .ForMember(dest => dest.MarqueProduitNavigation, opt => opt.Ignore())
                 .ForMember(dest => dest.TypeProduitNavigation, opt => opt.Ignore())

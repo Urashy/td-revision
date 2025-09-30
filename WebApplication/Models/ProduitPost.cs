@@ -3,11 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace WebApplication.Models
 {
-    public class Produit : IEntity
+    public class ProduitPost
     {
-        [JsonPropertyName("idProduit")]
-        public int IdProduit { get; set; }
-
         [JsonPropertyName("nom")]
         [Required(ErrorMessage = "Le nom du produit est obligatoire")]
         public string? Nom { get; set; }
@@ -24,21 +21,15 @@ namespace WebApplication.Models
         public string? Description { get; set; }
 
         [JsonPropertyName("stock")]
+        [Required(ErrorMessage = "Le stock initial est obligatoire")]
         public int? Stock { get; set; }
 
         [JsonPropertyName("stockMini")]
+        [Required(ErrorMessage = "Le stock minimum est obligatoire")]
         public int? StockMini { get; set; }
 
         [JsonPropertyName("stockMaxi")]
+        [Required(ErrorMessage = "Le stock maximum est obligatoire")]
         public int? StockMaxi { get; set; }
-
-        [JsonPropertyName("enReappro")]
-        public bool EnReappro { get; set; }
-
-        public int Id
-        {
-            get => IdProduit;
-            set => IdProduit = value;
-        }
     }
 }
