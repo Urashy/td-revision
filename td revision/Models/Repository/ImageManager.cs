@@ -24,7 +24,7 @@ namespace td_revision.Models.Repository
 
         public override async Task<ActionResult<Image?>> GetByStringAsync(string str)
         {
-            return await dbSet.FirstOrDefaultAsync(i => i.NomImage == str);
+            return await dbSet.FirstOrDefaultAsync(i => i.Nom == str);
         }
     }
 }

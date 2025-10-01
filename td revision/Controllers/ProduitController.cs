@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using td_revision.Models;
-using td_revision.DTO;
 using td_revision.Models.Repository;
 using AutoMapper;
+using td_revision.DTO.Produit;
 
 namespace td_revision.Controllers
 {

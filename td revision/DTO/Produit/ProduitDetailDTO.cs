@@ -1,4 +1,4 @@
-﻿namespace td_revision.DTO
+﻿namespace td_revision.DTO.Produit
 {
     public class ProduitDetailDTO
     {

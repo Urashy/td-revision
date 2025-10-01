@@ -168,3 +168,55 @@ tbody tr:hover {
 tbody td {
     padding: 0.5rem 1rem;
 }
+
+/* Banderole de réappro */
+.reappro-ribbon {
+    position: absolute;
+    top: 15px;
+    right: -5px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+    color: white;
+    padding: 5px 15px 5px 10px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(255, 82, 82, 0.4);
+    z-index: 10;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8% 50%);
+    animation: pulse-ribbon 2s ease-in-out infinite;
+}
+
+    .reappro-ribbon i {
+        margin-right: 5px;
+        animation: shake 0.8s ease-in-out infinite;
+    }
+
+@keyframes pulse-ribbon {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(255, 82, 82, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 4px 16px rgba(255, 82, 82, 0.6);
+    }
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-2px);
+    }
+
+    75% {
+        transform: translateX(2px);
+    }
+}
+
+.card-header {
+    position: relative;
+    overflow: visible !important;
+}

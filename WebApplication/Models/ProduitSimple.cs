@@ -15,6 +15,8 @@ namespace WebApplication.Models
 
         [JsonPropertyName("marque")]
         public string? Marque { get; set; }
+        public bool? EnReappro { get; set; } 
+
 
         public int Id
         {

@@ -3,8 +3,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace td_revision.Models
 {
-    [Table("image")]
 
+
+    [Table("image")]
     public class Image : IEntity
     {
         [Key]
@@ -12,15 +13,13 @@ namespace td_revision.Models
         public int IdImage { get; set; }
 
         [Column("nom")]
-        public string NomImage { get; set; }
-
+        public string Nom { get; set; }
 
         [Column("urlphoto")]
-        public string? UrlPhoto { get; set; }
+        public string? Url { get; set; }
 
         [Column("idproduit")]
         public int IdProduit { get; set; }
-
 
         [ForeignKey(nameof(IdProduit))]
         [InverseProperty(nameof(Produit.Images))]

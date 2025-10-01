@@ -24,7 +24,7 @@ namespace td_revision.Models
         public int? IdTypeProduit { get; set; }
 
         [Column("stockreel")]
-        public int? StockReel { get; set; }
+        public int? Stock { get; set; }
 
         [Column("stockmini")]
         public int? StockMini { get; set; }
