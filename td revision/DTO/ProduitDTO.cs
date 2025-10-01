@@ -6,7 +6,6 @@ namespace td_revision.DTO
     {
         public int IdProduit { get; set; }
         public string? Nom { get; set; }
-
         public string? Type { get; set; }
         public string? Marque { get; set; }
     }

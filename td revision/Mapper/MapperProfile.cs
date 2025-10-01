@@ -55,6 +55,8 @@ namespace td_revision.Mapper
                 .ForMember(dest => dest.IdMarque, opt => opt.Ignore())
                 .ForMember(dest => dest.IdTypeProduit, opt => opt.Ignore());
 
+
+
             // ========== PRODUIT -> PRODUITDTO (lecture simple) ==========
             CreateMap<Produit, ProduitDTO>()
                 .ForMember(dest => dest.Marque, opt => opt.MapFrom(src => src.MarqueProduitNavigation.Nom))
