@@ -3,6 +3,7 @@
 @inject IGenericService<Marque> WSMarque
 @inject IGenericService<TypeProduit> WSTypeProduit
 @inject IGenericService<Image> WSImage
+@inject INotificationService NotificationService
 @using WebApplication.Models
 @using WebApplication.Services
 
@@ -119,7 +120,6 @@ else
 
                     <div class="card-body d-flex flex-column">
                         <div class="mb-3">
-                            <!-- Images du produit -->
                             @if (imagesProduits.ContainsKey(produit.IdProduit) && imagesProduits[produit.IdProduit].Any())
                             {
                                 var firstImage = imagesProduits[produit.IdProduit].First();
@@ -137,8 +137,6 @@ else
                                     <i class="fas fa-image fa-3x text-muted"></i>
                                 </div>
                             }
-
-
                         </div>
 
                         <div class="flex-grow-1">
@@ -178,8 +176,8 @@ else
 <!-- Modal de détails -->
 @if (showDetailModal && produitSelectionne != null)
 {
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg">
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @onclick="FermerDetailModal">
+        <div class="modal-dialog modal-lg" @onclick:stopPropagation="true">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">
@@ -222,7 +220,6 @@ else
                                 var images = imagesProduits[produitSelectionne.IdProduit];
                                 @if (images.Count > 1)
                                 {
-                                    <!-- Carrousel pour la modal -->
                                     <div id="carousel-detail-@produitSelectionne.IdProduit" class="carousel slide" data-bs-ride="carousel">
                                         <div class="carousel-indicators">
                                             @for (int i = 0; i < images.Count; i++)
@@ -256,7 +253,6 @@ else
                                 }
                                 else
                                 {
-                                    <!-- Une seule image -->
                                     <div class="row g-2">
                                         @foreach (var image in images)
                                         {
@@ -296,8 +292,8 @@ else
 <!-- Modal de modification -->
 @if (showEditModal && produitAModifier != null)
 {
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg">
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @onclick="FermerEditModal">
+        <div class="modal-dialog modal-xl" @onclick:stopPropagation="true">
             <div class="modal-content">
                 <div class="modal-header bg-warning text-dark">
                     <h5 class="modal-title">
@@ -319,64 +315,144 @@ else
                         <DataAnnotationsValidator />
                         <ValidationSummary class="text-danger mb-3" />
 
-                        <div class="row g-3">
-                            <!-- Nom du produit -->
+                        <div class="row">
+                            <!-- Colonne de gauche : Informations du produit -->
                             <div class="col-md-6">
-                                <label for="editNom" class="form-label fw-bold">
-                                    Nom du produit <span class="text-danger">*</span>
-                                </label>
-                                <InputText id="editNom" class="form-control" @bind-Value="produitAModifier.Nom" />
-                                <ValidationMessage For="@(() => produitAModifier.Nom)" />
+                                <h6 class="fw-bold text-warning mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Informations du produit
+                                </h6>
+
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="editNom" class="form-label fw-bold">
+                                            Nom du produit <span class="text-danger">*</span>
+                                        </label>
+                                        <InputText id="editNom" class="form-control" @bind-Value="produitAModifier.Nom" />
+                                        <ValidationMessage For="@(() => produitAModifier.Nom)" />
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label for="editMarque" class="form-label fw-bold">
+                                            Marque <span class="text-danger">*</span>
+                                        </label>
+                                        <select id="editMarque" class="form-select" @bind="produitAModifier.Marque">
+                                            <option value="">-- Sélectionnez une marque --</option>
+                                            @if (marquesDisponibles != null)
+                                            {
+                                                @foreach (var marque in marquesDisponibles)
+                                                {
+                                                    <option value="@marque.Nom">@marque.Nom</option>
+                                                }
+                                            }
+                                        </select>
+                                        <ValidationMessage For="@(() => produitAModifier.Marque)" />
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label for="editType" class="form-label fw-bold">
+                                            Type de produit <span class="text-danger">*</span>
+                                        </label>
+                                        <select id="editType" class="form-select" @bind="produitAModifier.Type">
+                                            <option value="">-- Sélectionnez un type --</option>
+                                            @if (typesDisponibles != null)
+                                            {
+                                                @foreach (var type in typesDisponibles)
+                                                {
+                                                    <option value="@type.Nom">@type.Nom</option>
+                                                }
+                                            }
+                                        </select>
+                                        <ValidationMessage For="@(() => produitAModifier.Type)" />
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label for="editStock" class="form-label fw-bold">Stock actuel</label>
+                                        <InputNumber id="editStock" class="form-control" @bind-Value="produitAModifier.Stock" />
+                                        <ValidationMessage For="@(() => produitAModifier.Stock)" />
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label for="editDescription" class="form-label fw-bold">Description</label>
+                                        <InputTextArea id="editDescription" class="form-control" rows="3" @bind-Value="produitAModifier.Description" />
+                                        <ValidationMessage For="@(() => produitAModifier.Description)" />
+                                    </div>
+                                </div>
                             </div>
 
-                            <!-- Stock -->
+                            <!-- Colonne de droite : Gestion des images -->
                             <div class="col-md-6">
-                                <label for="editStock" class="form-label fw-bold">Stock</label>
-                                <InputNumber id="editStock" class="form-control" @bind-Value="produitAModifier.Stock" />
-                                <ValidationMessage For="@(() => produitAModifier.Stock)" />
-                            </div>
+                                <h6 class="fw-bold text-warning mb-3">
+                                    <i class="fas fa-images me-2"></i>
+                                    Gestion des images
+                                </h6>
 
-                            <!-- Marque -->
-                            <div class="col-md-6">
-                                <label for="editMarque" class="form-label fw-bold">
-                                    Marque <span class="text-danger">*</span>
-                                </label>
-                                <select id="editMarque" class="form-select" @bind="produitAModifier.Marque">
-                                    <option value="">-- Sélectionnez une marque --</option>
-                                    @if (marquesDisponibles != null)
-                                    {
-                                        @foreach (var marque in marquesDisponibles)
+                                <!-- Ajouter une nouvelle image -->
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Ajouter une image</h6>
+                                        <div class="mb-2">
+                                            <label for="editNomImage" class="form-label">Nom de l'image</label>
+                                            <input type="text" id="editNomImage" class="form-control" @bind="nouvelleImageNom" placeholder="Ex: Photo principale" />
+                                        </div>
+                                        <div class="mb-2">
+                                            <label for="editUrlImage" class="form-label">URL de l'image</label>
+                                            <input type="text" id="editUrlImage" class="form-control" @bind="nouvelleImageUrl" placeholder="https://..." />
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-success w-100" @onclick="AjouterImageTemporaire">
+                                            <i class="fas fa-plus me-1"></i>
+                                            Ajouter l'image
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Liste des images existantes et nouvelles -->
+                                <div class="card">
+                                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                        <h6 class="card-title">Images du produit</h6>
+
+                                        @if (imagesModification.Any())
                                         {
-                                            <option value="@marque.Nom">@marque.Nom</option>
+                                            <div class="row g-2">
+                                                @foreach (var img in imagesModification)
+                                                {
+                                                    <div class="col-12">
+                                                        <div class="card">
+                                                            <div class="row g-0">
+                                                                <div class="col-4">
+                                                                    <img src="@img.UrlPhoto" alt="@img.NomImage"
+                                                                         class="img-fluid rounded-start"
+                                                                         style="height: 100px; object-fit: cover; width: 100%;"
+                                                                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23f0f0f0\' width=\'100\' height=\'100\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\'%3EImage%3C/text%3E%3C/svg%3E';" />
+                                                                </div>
+                                                                <div class="col-8">
+                                                                    <div class="card-body p-2">
+                                                                        <p class="card-text mb-1">
+                                                                            <strong>@img.NomImage</strong>
+                                                                            @if (img.IdImage == 0)
+                                                                            {
+                                                                                <span class="badge bg-success ms-1">Nouvelle</span>
+                                                                            }
+                                                                        </p>
+                                                                        <small class="text-muted d-block text-truncate">@img.UrlPhoto</small>
+                                                                        <button type="button" class="btn btn-sm btn-danger mt-2" @onclick="() => SupprimerImageModification(img)">
+                                                                            <i class="fas fa-trash me-1"></i>
+                                                                            Supprimer
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
                                         }
-                                    }
-                                </select>
-                                <ValidationMessage For="@(() => produitAModifier.Marque)" />
-                            </div>
-
-                            <!-- Type -->
-                            <div class="col-md-6">
-                                <label for="editType" class="form-label fw-bold">
-                                    Type de produit <span class="text-danger">*</span>
-                                </label>
-                                <select id="editType" class="form-select" @bind="produitAModifier.Type">
-                                    <option value="">-- Sélectionnez un type --</option>
-                                    @if (typesDisponibles != null)
-                                    {
-                                        @foreach (var type in typesDisponibles)
+                                        else
                                         {
-                                            <option value="@type.Nom">@type.Nom</option>
+                                            <p class="text-muted text-center">Aucune image pour ce produit</p>
                                         }
-                                    }
-                                </select>
-                                <ValidationMessage For="@(() => produitAModifier.Type)" />
-                            </div>
-
-                            <!-- Description -->
-                            <div class="col-12">
-                                <label for="editDescription" class="form-label fw-bold">Description</label>
-                                <InputTextArea id="editDescription" class="form-control" rows="3" @bind-Value="produitAModifier.Description" />
-                                <ValidationMessage For="@(() => produitAModifier.Description)" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -404,8 +480,8 @@ else
 <!-- Modal de confirmation de suppression -->
 @if (showDeleteModal && produitASupprimer != null)
 {
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @onclick="FermerDeleteModal">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title">
@@ -457,7 +533,6 @@ else
         border: 1px solid #dee2e6;
     }
 
-    /* Style pour les carrousels */
     .carousel-control-prev-icon,
     .carousel-control-next-icon {
         background-color: rgba(0, 0, 0, 0.5);
@@ -523,6 +598,12 @@ else
     private bool isSubmittingEdit = false;
     private bool isSubmittingDelete = false;
 
+    // Variables pour la gestion des images dans la modification
+    private List<Image> imagesModification = new List<Image>();
+    private List<Image> imagesASupprimer = new List<Image>();
+    private string nouvelleImageNom = "";
+    private string nouvelleImageUrl = "";
+
     // Cast pour accéder aux méthodes spécifiques de ProduitService
     private ProduitService ProduitService => (ProduitService)WSProduit;
 
@@ -537,6 +618,7 @@ else
         catch (Exception ex)
         {
             Console.WriteLine($"Erreur lors du chargement : {ex.Message}");
+            NotificationService.ShowError($"Erreur lors du chargement : {ex.Message}");
         }
     }
 
@@ -583,7 +665,6 @@ else
     {
         try
         {
-            // Utilise la méthode spécifique GetFilteredAsync via le cast
             produitsFiltres = await ProduitService.GetFilteredAsync(
                 searchTerm: string.IsNullOrEmpty(searchNom) ? null : searchNom,
                 marque: string.IsNullOrEmpty(selectedMarque) ? null : selectedMarque,
@@ -608,7 +689,7 @@ else
         await LoadFilteredProduits();
     }
 
-    // Méthodes pour les modals
+    // Méthodes pour les modals de détails
     private async Task VoirDetails(int produitId)
     {
         try
@@ -621,6 +702,7 @@ else
         catch (Exception ex)
         {
             Console.WriteLine($"Erreur lors du chargement des détails : {ex.Message}");
+            NotificationService.ShowError($"Erreur lors du chargement des détails : {ex.Message}");
         }
     }
 
@@ -631,6 +713,7 @@ else
         StateHasChanged();
     }
 
+    // Méthodes pour la modal de modification
     private async Task ModifierProduit(int produitId)
     {
         try
@@ -638,6 +721,27 @@ else
             FermerDetailModal();
             produitAModifier = await WSProduit.GetByIdAsync(produitId);
             errorMessageEdit = "";
+
+            // Charger les images existantes pour ce produit
+            if (imagesProduits.ContainsKey(produitId))
+            {
+                imagesModification = imagesProduits[produitId].Select(img => new Image
+                {
+                    IdImage = img.IdImage,
+                    NomImage = img.NomImage,
+                    UrlPhoto = img.UrlPhoto,
+                    IdProduit = img.IdProduit
+                }).ToList();
+            }
+            else
+            {
+                imagesModification = new List<Image>();
+            }
+
+            imagesASupprimer = new List<Image>();
+            nouvelleImageNom = "";
+            nouvelleImageUrl = "";
+
             showEditModal = true;
             StateHasChanged();
         }
@@ -645,6 +749,7 @@ else
         {
             Console.WriteLine($"Erreur lors du chargement pour modification : {ex.Message}");
             errorMessageEdit = $"Erreur lors du chargement : {ex.Message}";
+            NotificationService.ShowError($"Erreur lors du chargement : {ex.Message}");
         }
     }
 
@@ -654,6 +759,57 @@ else
         produitAModifier = null;
         errorMessageEdit = "";
         isSubmittingEdit = false;
+        imagesModification.Clear();
+        imagesASupprimer.Clear();
+        nouvelleImageNom = "";
+        nouvelleImageUrl = "";
+        StateHasChanged();
+    }
+
+    private void AjouterImageTemporaire()
+    {
+        if (string.IsNullOrWhiteSpace(nouvelleImageNom))
+        {
+            NotificationService.ShowWarning("Veuillez saisir un nom pour l'image");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(nouvelleImageUrl))
+        {
+            NotificationService.ShowWarning("Veuillez saisir une URL pour l'image");
+            return;
+        }
+
+        // Ajouter une nouvelle image temporaire (IdImage = 0 pour indiquer qu'elle n'existe pas encore en DB)
+        var nouvelleImage = new Image
+        {
+            IdImage = 0,
+            NomImage = nouvelleImageNom,
+            UrlPhoto = nouvelleImageUrl,
+            IdProduit = produitAModifier?.IdProduit ?? 0
+        };
+
+        imagesModification.Add(nouvelleImage);
+
+        // Réinitialiser les champs
+        nouvelleImageNom = "";
+        nouvelleImageUrl = "";
+
+        NotificationService.ShowSuccess("Image ajoutée à la liste");
+        StateHasChanged();
+    }
+
+    private void SupprimerImageModification(Image image)
+    {
+        // Si l'image existe déjà en DB (IdImage > 0), on l'ajoute à la liste de suppression
+        if (image.IdImage > 0)
+        {
+            imagesASupprimer.Add(image);
+        }
+
+        // Retirer l'image de la liste d'affichage
+        imagesModification.Remove(image);
+        NotificationService.ShowInfo("Image marquée pour suppression");
         StateHasChanged();
     }
 
@@ -664,14 +820,48 @@ else
 
         try
         {
+            // 1. Mettre à jour le produit
             await WSProduit.UpdateAsync(produitAModifier.Id, produitAModifier);
+
+            // 2. Supprimer les images marquées pour suppression
+            foreach (var imageASupprimer in imagesASupprimer)
+            {
+                try
+                {
+                    await WSImage.DeleteAsync(imageASupprimer.IdImage);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erreur lors de la suppression de l'image {imageASupprimer.IdImage}: {ex.Message}");
+                }
+            }
+
+            // 3. Ajouter les nouvelles images (celles avec IdImage = 0)
+            var nouvellesImages = imagesModification.Where(img => img.IdImage == 0).ToList();
+            foreach (var nouvelleImage in nouvellesImages)
+            {
+                try
+                {
+                    nouvelleImage.IdProduit = produitAModifier.IdProduit;
+                    await WSImage.AddAsync(nouvelleImage);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erreur lors de l'ajout de l'image {nouvelleImage.NomImage}: {ex.Message}");
+                }
+            }
+
+            // 4. Recharger les données
             await OnInitializedAsync();
+
+            NotificationService.ShowSuccess($"Le produit '{produitAModifier.Nom}' a été modifié avec succès");
             FermerEditModal();
         }
         catch (Exception ex)
         {
             errorMessageEdit = $"Erreur lors de la modification : {ex.Message}";
             Console.WriteLine($"Erreur ConfirmerModification : {ex}");
+            NotificationService.ShowError($"Erreur lors de la modification : {ex.Message}");
         }
         finally
         {
@@ -680,6 +870,7 @@ else
         }
     }
 
+    // Méthodes pour la modal de suppression
     private void SupprimerProduit(int produitId, string nomProduit)
     {
         produitASupprimer = (produitId, nomProduit);
@@ -703,6 +894,7 @@ else
 
         try
         {
+            // Supprimer les images associées
             if (imagesProduits.TryGetValue(produitASupprimer.Value.id, out var images))
             {
                 foreach (var image in images)
@@ -711,13 +903,18 @@ else
                 }
             }
 
+            // Supprimer le produit
             await WSProduit.DeleteAsync(produitASupprimer.Value.id);
+
+            NotificationService.ShowSuccess($"Le produit '{produitASupprimer.Value.nom}' a été supprimé avec succès");
+
             await OnInitializedAsync();
             FermerDeleteModal();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Erreur lors de la suppression : {ex.Message}");
+            NotificationService.ShowError($"Erreur lors de la suppression : {ex.Message}");
         }
         finally
         {
