@@ -229,17 +229,29 @@ else
                                             }
                                         </div>
                                         <div class="carousel-inner rounded">
+                                            
                                             @for (int i = 0; i < images.Count; i++)
-                                            {
-                                                var image = images[i];
-                                                <div class="carousel-item @(i == 0 ? "active" : "")">
-                                                    <img src="@image.UrlPhoto" alt="@image.NomImage" class="d-block w-100"
-                                                         style="height: 250px; object-fit: cover;" />
-                                                    <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded">
-                                                        <p class="mb-0">@image.NomImage</p>
-                                                    </div>
-                                                </div>
-                                            }
+{
+    var image = images[i];
+
+    <div class="carousel-item @(i == 0 ? "active" : "")">
+        <!-- Conteneur pour l'image -->
+        <div style="height: 250px; display: flex; justify-content: center; align-items: center;">
+            <img src="@image.UrlPhoto" alt="@image.NomImage"
+                 style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+        </div>
+
+        <!-- Légende en dessous -->
+        <div class="text-center mt-2">
+            <p class="mb-0 small" style="background-color: rgba(0,0,0,0.6); color: white; display: inline-block; padding: 5px 10px; border-radius: 5px;">
+                @image.NomImage
+            </p>
+        </div>
+    </div>
+}
+
+
+
                                         </div>
                                         <button class="carousel-control-prev" type="button" data-bs-target="#carousel-detail-@produitSelectionne.IdProduit" data-bs-slide="prev">
                                             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
