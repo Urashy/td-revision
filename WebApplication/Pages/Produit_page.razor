@@ -215,8 +215,16 @@ else
                                 <tr>
                                     <td class="fw-bold">Stock :</td>
                                     <td>
-                                        <span class="badge @(produitSelectionne.Stock > 0 ? "bg-success" : "bg-danger")">
+                                        <span class="badge @(produitSelectionne.Stock > produitSelectionne.StockMini ? "bg-success" : "bg-danger")">
                                             @(produitSelectionne.Stock ?? 0)
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Stock minimal :</td>
+                                    <td>
+                                        <span class="badge @(produitSelectionne.StockMini > produitSelectionne.StockMini ? "bg-success" : "bg-danger")">
+                                            @(produitSelectionne.StockMini ?? 0)
                                         </span>
                                     </td>
                                 </tr>

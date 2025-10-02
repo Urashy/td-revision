@@ -7,7 +7,7 @@ public static class TestData
         public static readonly string ExistingProductName = "Produit Test 1";
         public static readonly string ExistingProductMarque = "MarqueTest";
         public static readonly string ExistingProductType = "TypeTest";
-        
+
         public static readonly string NewProductName = "Nouveau Produit E2E";
         public static readonly string NewProductMarque = "Marque E2E";
         public static readonly string NewProductType = "Type E2E";
@@ -22,7 +22,8 @@ public static class TestData
     public static class Filters
     {
         public static readonly string SearchTerm = "Test";
-        public static readonly string ValidMarque = ""; 
-        public static readonly string ValidType = "";  
+
+        public static readonly string ValidMarque = Products.ExistingProductMarque;
+        public static readonly string ValidType = Products.ExistingProductType;
     }
 }
