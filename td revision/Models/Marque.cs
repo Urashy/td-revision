@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace td_revision.Models
 {
-    [Table("marque")]
+    [Table("t_e_marque_mrq")]
     public class Marque : IEntity
     {
         [Key]
@@ -16,7 +16,7 @@ namespace td_revision.Models
 
         [InverseProperty(nameof(Produit.MarqueProduitNavigation))]
         public virtual ICollection<Produit> Produits { get; set; } = new List<Produit>();
+
         public int Id => IdMarque;
     }
 }
-

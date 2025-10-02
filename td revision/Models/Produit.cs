@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace td_revision.Models
 {
-    [Table("produit")]
+    [Table("t_e_produit_prd")]
     public class Produit : IEntity
     {
         [Key]

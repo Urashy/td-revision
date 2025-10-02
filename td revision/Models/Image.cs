@@ -3,9 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace td_revision.Models
 {
-
-
-    [Table("image")]
+    [Table("t_e_image_img")]
     public class Image : IEntity
     {
         [Key]

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace td_revision.Models
 {
-    [Table("typeproduit")]
+    [Table("t_e_typeproduit_typ")]
     public class TypeProduit : IEntity
     {
         [Key]
@@ -17,6 +17,5 @@ namespace td_revision.Models
         public virtual ICollection<Produit> Produits { get; set; } = new List<Produit>();
 
         public int Id => IdTypeProduit;
-
     }
 }

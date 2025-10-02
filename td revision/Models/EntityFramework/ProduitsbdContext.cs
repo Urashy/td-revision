@@ -23,17 +23,18 @@ public partial class ProduitsbdContext : DbContext
     {
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
         //=> optionsBuilder.UseNpgsql("Host=hopper.proxy.rlwy.net;Port=17710;Database=railway;Username=postgres;Password=lkxgcHxVHYPbGRRGTIbAYbrixXjriKpc;SSL Mode=Require;Trust Server Certificate=true");
     }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Produit>(entity =>
         {
+            entity.ToTable("t_e_produit_prd");
             entity.HasKey(e => e.IdProduit);
 
-            // ← AJOUTE CETTE LIGNE pour forcer l'auto-incrémentation
             entity.Property(e => e.IdProduit)
                   .ValueGeneratedOnAdd()
                   .UseIdentityColumn();
@@ -41,44 +42,39 @@ public partial class ProduitsbdContext : DbContext
             entity.HasOne(p => p.MarqueProduitNavigation)
                   .WithMany(m => m.Produits)
                   .OnDelete(DeleteBehavior.ClientSetNull)
-                  .HasConstraintName("FK_produits_marque");
+                  .HasConstraintName("FK_t_e_produit_prd_t_e_marque_mrq");
+
+            entity.HasOne(p => p.TypeProduitNavigation)
+                  .WithMany(t => t.Produits)
+                  .OnDelete(DeleteBehavior.ClientSetNull)
+                  .HasConstraintName("FK_t_e_produit_prd_t_e_typeproduit_typ");
         });
 
         modelBuilder.Entity<TypeProduit>(entity =>
         {
+            entity.ToTable("t_e_typeproduit_typ");
             entity.HasKey(e => e.IdTypeProduit);
 
-            // Même chose pour TypeProduit
             entity.Property(e => e.IdTypeProduit)
                   .ValueGeneratedOnAdd()
                   .UseIdentityColumn();
-
-            entity.HasMany(p => p.Produits)
-                  .WithOne(m => m.TypeProduitNavigation)
-                  .OnDelete(DeleteBehavior.ClientSetNull)
-                  .HasConstraintName("FK_produits_type_produit");
         });
 
         modelBuilder.Entity<Marque>(entity =>
         {
+            entity.ToTable("t_e_marque_mrq");
             entity.HasKey(e => e.IdMarque);
 
-            // Même chose pour Marque
             entity.Property(e => e.IdMarque)
                   .ValueGeneratedOnAdd()
                   .UseIdentityColumn();
-
-            entity.HasMany(p => p.Produits)
-                  .WithOne(m => m.MarqueProduitNavigation)
-                  .OnDelete(DeleteBehavior.ClientSetNull)
-                  .HasConstraintName("FK_produits_marque");
         });
 
         modelBuilder.Entity<Image>(entity =>
         {
+            entity.ToTable("t_e_image_img");
             entity.HasKey(e => e.IdImage);
 
-            // Même chose pour Image
             entity.Property(e => e.IdImage)
                   .ValueGeneratedOnAdd()
                   .UseIdentityColumn();
@@ -87,12 +83,11 @@ public partial class ProduitsbdContext : DbContext
                   .WithMany(p => p.Images)
                   .HasForeignKey(i => i.IdProduit)
                   .OnDelete(DeleteBehavior.ClientSetNull)
-                  .HasConstraintName("FK_images_produit");
+                  .HasConstraintName("FK_t_e_image_img_t_e_produit_prd");
         });
 
         OnModelCreatingPartial(modelBuilder);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
-
 }

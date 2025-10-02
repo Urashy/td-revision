@@ -47,7 +47,7 @@ namespace td_revision.Migrations
 
                     b.HasIndex("IdProduit");
 
-                    b.ToTable("image");
+                    b.ToTable("t_e_image_img", (string)null);
                 });
 
             modelBuilder.Entity("td_revision.Models.Marque", b =>
@@ -66,7 +66,7 @@ namespace td_revision.Migrations
 
                     b.HasKey("IdMarque");
 
-                    b.ToTable("marque");
+                    b.ToTable("t_e_marque_mrq", (string)null);
                 });
 
             modelBuilder.Entity("td_revision.Models.Produit", b =>
@@ -113,7 +113,7 @@ namespace td_revision.Migrations
 
                     b.HasIndex("IdTypeProduit");
 
-                    b.ToTable("produit");
+                    b.ToTable("t_e_produit_prd", (string)null);
                 });
 
             modelBuilder.Entity("td_revision.Models.TypeProduit", b =>
@@ -132,7 +132,7 @@ namespace td_revision.Migrations
 
                     b.HasKey("IdTypeProduit");
 
-                    b.ToTable("typeproduit");
+                    b.ToTable("t_e_typeproduit_typ", (string)null);
                 });
 
             modelBuilder.Entity("td_revision.Models.Image", b =>
@@ -141,7 +141,7 @@ namespace td_revision.Migrations
                         .WithMany("Images")
                         .HasForeignKey("IdProduit")
                         .IsRequired()
-                        .HasConstraintName("FK_images_produit");
+                        .HasConstraintName("FK_t_e_image_img_t_e_produit_prd");
 
                     b.Navigation("ProduitNavigation");
                 });
@@ -151,12 +151,12 @@ namespace td_revision.Migrations
                     b.HasOne("td_revision.Models.Marque", "MarqueProduitNavigation")
                         .WithMany("Produits")
                         .HasForeignKey("IdMarque")
-                        .HasConstraintName("FK_produits_marque");
+                        .HasConstraintName("FK_t_e_produit_prd_t_e_marque_mrq");
 
                     b.HasOne("td_revision.Models.TypeProduit", "TypeProduitNavigation")
                         .WithMany("Produits")
                         .HasForeignKey("IdTypeProduit")
-                        .HasConstraintName("FK_produits_type_produit");
+                        .HasConstraintName("FK_t_e_produit_prd_t_e_typeproduit_typ");
 
                     b.Navigation("MarqueProduitNavigation");
 

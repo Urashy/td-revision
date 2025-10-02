@@ -6,13 +6,13 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace td_revision.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class RenameTablesISO11179 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "marque",
+                name: "t_e_marque_mrq",
                 columns: table => new
                 {
                     idmarque = table.Column<int>(type: "integer", nullable: false)
@@ -21,11 +21,11 @@ namespace td_revision.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_marque", x => x.idmarque);
+                    table.PrimaryKey("PK_t_e_marque_mrq", x => x.idmarque);
                 });
 
             migrationBuilder.CreateTable(
-                name: "typeproduit",
+                name: "t_e_typeproduit_typ",
                 columns: table => new
                 {
                     idtypeproduit = table.Column<int>(type: "integer", nullable: false)
@@ -34,11 +34,11 @@ namespace td_revision.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_typeproduit", x => x.idtypeproduit);
+                    table.PrimaryKey("PK_t_e_typeproduit_typ", x => x.idtypeproduit);
                 });
 
             migrationBuilder.CreateTable(
-                name: "produit",
+                name: "t_e_produit_prd",
                 columns: table => new
                 {
                     idproduit = table.Column<int>(type: "integer", nullable: false)
@@ -53,21 +53,21 @@ namespace td_revision.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_produit", x => x.idproduit);
+                    table.PrimaryKey("PK_t_e_produit_prd", x => x.idproduit);
                     table.ForeignKey(
-                        name: "FK_produits_marque",
+                        name: "FK_t_e_produit_prd_t_e_marque_mrq",
                         column: x => x.idmarque,
-                        principalTable: "marque",
+                        principalTable: "t_e_marque_mrq",
                         principalColumn: "idmarque");
                     table.ForeignKey(
-                        name: "FK_produits_type_produit",
+                        name: "FK_t_e_produit_prd_t_e_typeproduit_typ",
                         column: x => x.idtypeproduit,
-                        principalTable: "typeproduit",
+                        principalTable: "t_e_typeproduit_typ",
                         principalColumn: "idtypeproduit");
                 });
 
             migrationBuilder.CreateTable(
-                name: "image",
+                name: "t_e_image_img",
                 columns: table => new
                 {
                     idimage = table.Column<int>(type: "integer", nullable: false)
@@ -78,27 +78,27 @@ namespace td_revision.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_image", x => x.idimage);
+                    table.PrimaryKey("PK_t_e_image_img", x => x.idimage);
                     table.ForeignKey(
-                        name: "FK_images_produit",
+                        name: "FK_t_e_image_img_t_e_produit_prd",
                         column: x => x.idproduit,
-                        principalTable: "produit",
+                        principalTable: "t_e_produit_prd",
                         principalColumn: "idproduit");
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_image_idproduit",
-                table: "image",
+                name: "IX_t_e_image_img_idproduit",
+                table: "t_e_image_img",
                 column: "idproduit");
 
             migrationBuilder.CreateIndex(
-                name: "IX_produit_idmarque",
-                table: "produit",
+                name: "IX_t_e_produit_prd_idmarque",
+                table: "t_e_produit_prd",
                 column: "idmarque");
 
             migrationBuilder.CreateIndex(
-                name: "IX_produit_idtypeproduit",
-                table: "produit",
+                name: "IX_t_e_produit_prd_idtypeproduit",
+                table: "t_e_produit_prd",
                 column: "idtypeproduit");
         }
 
@@ -106,16 +106,16 @@ namespace td_revision.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "image");
+                name: "t_e_image_img");
 
             migrationBuilder.DropTable(
-                name: "produit");
+                name: "t_e_produit_prd");
 
             migrationBuilder.DropTable(
-                name: "marque");
+                name: "t_e_marque_mrq");
 
             migrationBuilder.DropTable(
-                name: "typeproduit");
+                name: "t_e_typeproduit_typ");
         }
     }
 }
