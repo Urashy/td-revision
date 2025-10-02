@@ -9,7 +9,7 @@ using td_revision.Models;
 using td_revision.Models.EntityFramework;
 using td_revision.Models.Repository;
 
-namespace td_revision.Controllers.Tests
+namespace td_revisionTests.Controllers.Tests
 {
     [TestClass()]
     public class TypeProduitControllerTests

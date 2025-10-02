@@ -16,7 +16,7 @@ using td_revision.Models.Repository;
 using td_revision.Mapper;
 
 
-namespace td_revision.Controllers.Tests
+namespace td_revisionTests.Controllers.Tests
 {
     [TestClass()]
     public class ImageControllerTests

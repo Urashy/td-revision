@@ -8,7 +8,7 @@ using td_revision.Mapper;
 using td_revision.Models;
 using td_revision.Models.Repository;
 
-namespace td_revision.Controllers.Tests
+namespace td_revisionTests.Controllers.Tests
 {
     [TestClass()]
     public class MarqueControllerMockTests
@@ -217,7 +217,7 @@ namespace td_revision.Controllers.Tests
         public void ShouldDeleteMarque()
         {
             // Given: Une marque sans produits
-            Marque marqueInDb = new()
+            var marqueInDb = new Marque
             {
                 IdMarque = 1,
                 Nom = "Nike"
@@ -225,14 +225,19 @@ namespace td_revision.Controllers.Tests
 
             _marqueRepository
                 .Setup(repo => repo.GetByIdAsync(marqueInDb.IdMarque))
-                .ReturnsAsync(marqueInDb);
+                .ReturnsAsync(new ActionResult<Marque>(marqueInDb));
 
             _produitRepository
                 .Setup(repo => repo.GetAllAsync())
                 .ReturnsAsync(new ActionResult<IEnumerable<Produit>>(new List<Produit>()));
 
+            _imageRepository
+                .Setup(repo => repo.GetAllAsync())
+                .ReturnsAsync(new ActionResult<IEnumerable<Image>>(new List<Image>()));
+
             _marqueRepository
-                .Setup(repo => repo.DeleteAsync(marqueInDb));
+                .Setup(repo => repo.DeleteAsync(marqueInDb))
+                .Returns(Task.CompletedTask);
 
             // When: On supprime la marque
             IActionResult action = _controller.Delete(marqueInDb.IdMarque).GetAwaiter().GetResult();
@@ -244,6 +249,7 @@ namespace td_revision.Controllers.Tests
             _marqueRepository.Verify(repo => repo.GetByIdAsync(marqueInDb.IdMarque), Times.Once);
             _marqueRepository.Verify(repo => repo.DeleteAsync(marqueInDb), Times.Once);
         }
+
 
         [TestMethod]
         public void ShouldDeleteMarqueWithProducts()
