@@ -5,10 +5,10 @@ public class BasePage
     protected readonly IPage Page;
     protected readonly string BaseUrl;
 
-    public BasePage(IPage page, string baseUrl = "http://localhost:5000")
+    public BasePage(IPage page, string? baseUrl = null)
     {
         Page = page;
-        BaseUrl = baseUrl;
+        BaseUrl = baseUrl ?? Environment.GetEnvironmentVariable("BASE_URL") ?? "http://localhost:5178";
     }
 
     public async Task NavigateTo(string path)

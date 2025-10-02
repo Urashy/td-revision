@@ -22,7 +22,7 @@ public static class TestData
     public static class Filters
     {
         public static readonly string SearchTerm = "Test";
-        public static readonly string ValidMarque = "MarqueTest";
-        public static readonly string ValidType = "TypeTest";
+        public static readonly string ValidMarque = ""; 
+        public static readonly string ValidType = "";  
     }
 }

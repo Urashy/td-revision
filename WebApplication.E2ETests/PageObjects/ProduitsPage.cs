@@ -11,8 +11,8 @@ public class ProduitsPage : BasePage
     private const string ProductCard = ".product-card";
     private const string ResultBadge = ".badge.bg-info.fs-6";
 
-    public ProduitsPage(IPage page, string baseUrl = "http://localhost:5000") 
-        : base(page, baseUrl)
+    public ProduitsPage(IPage page, string? baseUrl = null)
+    : base(page, baseUrl)
     {
     }
 
@@ -64,28 +64,35 @@ public class ProduitsPage : BasePage
 
     #region Actions sur les produits
 
+
     public async Task ClickProductCard(string productName)
     {
-        await Page.ClickAsync($".product-card:has-text('{productName}')");
+        await Page.Locator($".product-card:has-text('{productName}')").First.ClickAsync();
+        await Page.WaitForTimeoutAsync(500);
     }
 
     public async Task ClickDetailsButton(string productName)
     {
-        var card = Page.Locator($".product-card:has-text('{productName}')");
+        var card = Page.Locator($".product-card:has-text('{productName}')").First;
         await card.Locator("button:has-text('Détails')").ClickAsync();
+        await Page.WaitForTimeoutAsync(300);
     }
 
     public async Task ClickEditButton(string productName)
     {
-        var card = Page.Locator($".product-card:has-text('{productName}')");
+        var card = Page.Locator($".product-card:has-text('{productName}')").First;
         await card.Locator("button.btn-outline-warning").ClickAsync();
+        await Page.WaitForTimeoutAsync(500);
     }
 
     public async Task ClickDeleteButton(string productName)
     {
-        var card = Page.Locator($".product-card:has-text('{productName}')");
+        var card = Page.Locator($".product-card:has-text('{productName}')").First;
         await card.Locator("button.btn-outline-danger").ClickAsync();
+        await Page.WaitForTimeoutAsync(300);
     }
+
+
 
     public async Task<bool> IsProductDisplayed(string productName)
     {

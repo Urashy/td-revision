@@ -1,5 +1,7 @@
-using WebApplication.E2ETests.PageObjects;
+using System.Net.Http.Json;
 using WebApplication.E2ETests.Fixtures;
+using WebApplication.E2ETests.PageObjects;
+using WebApplication.Models;
 
 namespace WebApplication.E2ETests.Tests;
 
@@ -8,13 +10,39 @@ namespace WebApplication.E2ETests.Tests;
 public class ProduitsTests : PageTest
 {
     private ProduitsPage _produitsPage = null!;
-    private const string BaseUrl = "http://localhost:5000"; // Ajustez selon votre config
+    private const string BaseUrl = "http://localhost:5178"; // Ajustez selon votre config
 
     [SetUp]
     public async Task Setup()
     {
         _produitsPage = new ProduitsPage(Page, BaseUrl);
+
+        // SEED des données de test via l'API
+        await SeedTestData();
+
         await _produitsPage.GoToProduitsPage();
+    }
+
+    private async Task SeedTestData()
+    {
+        using var httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5049") };
+
+        // Vérifie si des produits existent
+        var produits = await httpClient.GetFromJsonAsync<List<Produit>>("api/Produit/GetAll");
+
+        if (produits?.Count == 0)
+        {
+            // Ajoute des données de test
+            await httpClient.PostAsJsonAsync("api/Marque/Add", new { Nom = "MarqueTest" });
+            await httpClient.PostAsJsonAsync("api/TypeProduit/Add", new { Nom = "TypeTest" });
+            await httpClient.PostAsJsonAsync("api/Produit/Add", new
+            {
+                Nom = "Produit Test 1",
+                Marque = "MarqueTest",
+                Type = "TypeTest",
+                Stock = 10
+            });
+        }
     }
 
     [Test]
