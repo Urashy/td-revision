@@ -6,7 +6,7 @@ using td_revision.Models.EntityFramework;
 using td_revision.Models.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("LocalConnection");
 
 builder.Services.AddDbContext<ProduitsbdContext>(options =>
     options.UseNpgsql(connectionString));
@@ -17,11 +17,13 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowBlazorClient",
         policy =>
         {
-            policy.WithOrigins("https://localhost:7033")
+            policy.SetIsOriginAllowed(origin =>
+                new Uri(origin).Host == "localhost") 
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
 });
+
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
