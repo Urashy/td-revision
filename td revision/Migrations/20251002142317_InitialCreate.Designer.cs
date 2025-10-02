@@ -11,15 +11,15 @@ using td_revision.Models.EntityFramework;
 namespace td_revision.Migrations
 {
     [DbContext(typeof(ProduitsbdContext))]
-    [Migration("20250926120505_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20251002142317_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.4")
+                .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -37,12 +37,12 @@ namespace td_revision.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("idproduit");
 
-                    b.Property<string>("NomImage")
+                    b.Property<string>("Nom")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("nom");
 
-                    b.Property<string>("UrlPhoto")
+                    b.Property<string>("Url")
                         .HasColumnType("text")
                         .HasColumnName("urlphoto");
 
@@ -98,6 +98,10 @@ namespace td_revision.Migrations
                         .HasColumnType("text")
                         .HasColumnName("nom");
 
+                    b.Property<int?>("Stock")
+                        .HasColumnType("integer")
+                        .HasColumnName("stockreel");
+
                     b.Property<int?>("StockMaxi")
                         .HasColumnType("integer")
                         .HasColumnName("stockmaxi");
@@ -105,10 +109,6 @@ namespace td_revision.Migrations
                     b.Property<int?>("StockMini")
                         .HasColumnType("integer")
                         .HasColumnName("stockmini");
-
-                    b.Property<int?>("StockReel")
-                        .HasColumnType("integer")
-                        .HasColumnName("stockreel");
 
                     b.HasKey("IdProduit");
 
