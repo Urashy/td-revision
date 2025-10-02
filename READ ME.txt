@@ -1,0 +1,5 @@
+READ ME RENDU API/BLAZOR
+
+Bonjour Mr,
+
+Je précise en premier lieu que dans la solution il y a un fichier d'initialisation de données afin que vous ne vous embêtiez pas a créer des produits (ce n'est pas un stratagème car l'ajout de produit ne marche pas)(vraiment). Un fichier reset_données.bat (pour Windows) et un .sh (pour mac et linux) il faut que vous le rendiez exécutable avant de pouvoir l'utiliser (chmod +x reset_données.sh)
