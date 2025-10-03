@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using td_revision.Models;
 using td_revision.Models.Repository;
+using static System.Net.WebRequestMethods;
 
 namespace td_revision.Controllers
 {
@@ -104,7 +105,6 @@ namespace td_revision.Controllers
             IdTypeProduit=typesDb.First(t=>t.Nom=="Ordinateur portable").IdTypeProduit,
             Stock=14, StockMini=10, StockMaxi=28 },
 
-        // 🔹 Nouveau produit supplémentaire pour atteindre 7
         new Produit { Nom="Bravia OLED", Description="Télévision Sony",
             IdMarque=marquesDb.First(m=>m.Nom=="Sony").IdMarque,
             IdTypeProduit=typesDb.First(t=>t.Nom=="Télévision").IdTypeProduit,
@@ -116,7 +116,7 @@ namespace td_revision.Controllers
             var marqueTest = marquesDb.First(m => m.Nom == "MarqueTest");
             var typeTest = typesDb.First(t => t.Nom == "TypeTest");
 
-            await _produitRepository.AddAsync(new Produit
+            var produitTest1 = new Produit
             {
                 Nom = "Produit test 1",
                 Description = "Produit utilisé pour les tests",
@@ -125,9 +125,10 @@ namespace td_revision.Controllers
                 Stock = 5,
                 StockMini = 3,
                 StockMaxi = 10
-            });
+            };
+            await _produitRepository.AddAsync(produitTest1);
 
-            await _produitRepository.AddAsync(new Produit
+            var produitTest2 = new Produit
             {
                 Nom = "Nouveau Produit test E2E",
                 Description = "Deuxième produit de test",
@@ -136,8 +137,41 @@ namespace td_revision.Controllers
                 Stock = 12,
                 StockMini = 5,
                 StockMaxi = 20
-            });
+            };
+            await _produitRepository.AddAsync(produitTest2);
+
+            // 🔹 Recharger les produits pour avoir leurs IDs
+            var produitsDb = await _produitRepository.GetAllAsync();
+
+            // Images associées
+            var images = new[]
+            {
+        new Image { Nom="iPhone15", Url="https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcQRjj5FqXNtQZEP2oL70ybOdohein3ddcNB1M_g9Msc_TI1NV9gNC6YxmrpgU9Ba7ONPd7BR4pmdFBDG9lQcEpi1szxvf8dFXGlhrmchDRQ4noQZOiOLvB_8ajzLr4V&usqp=CAc",
+            IdProduit = produitsDb.First(p => p.Nom=="iPhone 15 Pro").IdProduit },
+        new Image { Nom="iPhone15.1", Url="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/IPhone_15_Vector.svg/langfr-250px-IPhone_15_Vector.svg.png",
+            IdProduit = produitsDb.First(p => p.Nom=="iPhone 15 Pro").IdProduit },
+
+        new Image { Nom="iPadAir", Url="https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRwp5zYrry6NTaWUnLoQSoqppXdJXRJu_ogu0xFBfoc98_r5vmqt1p4asaAmFFKjM6gLqSz79CssEDlrA1gLSDEJDVTd2WsiJ0dUYtL62WQ3J_V7ZeCpDEvI8b5UuAk&usqp=CAc",
+            IdProduit = produitsDb.First(p => p.Nom=="iPad Air").IdProduit },
+
+        new Image { Nom="GalaxyS24", Url="https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTqhqJkf56uCKsQHDmcyl8M6JkEqOoSPbjEs0XJ-TSiqBc3wZ8LDXy5vZIJq1uPSyVNiOdwk_VXbt4Hmcj7NAxlPJoLxk3KzCXEpe_wgdjEEG9DxiBtlEwmdLPtAeZf_MN6ZrrOWNQ&usqp=CAc",
+            IdProduit = produitsDb.First(p => p.Nom=="Galaxy S24 Ultra").IdProduit },
+
+        new Image { Nom="XPS15", Url="https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/dell-client-products/notebooks/xps-notebooks/xps-15-9530/media-gallery/touch-black/notebook-xps-15-9530-t-black-gallery-1.psd?fmt=png-alpha&pscan=auto&scl=1&hei=402&wid=654&qlt=100,1&resMode=sharp2&size=654,402&chrss=full",
+            IdProduit = produitsDb.First(p => p.Nom=="XPS 15").IdProduit },
+
+        new Image { Nom="Bravia", Url="https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcSVODlfFxBeaQKh2M12ES8-KOpmN8mgBy25jEPOPfwflj45SgxwR7gSm5hT-l_dIiYpz3zu4cM_WSSpI_4-dmQXbSmripH1NDe742VpL_2_OE9WWMpTtJX1v0ZMN2zrmgJcBJWb5Q-OCQ&usqp=CAc",
+            IdProduit = produitsDb.First(p => p.Nom=="Bravia OLED").IdProduit },
+
+        new Image { Nom="ProduitTest1", Url="https://latavernedutesteur.fr/wp-content/uploads/2017/11/testss.png",
+            IdProduit = produitsDb.First(p => p.Nom=="Produit test 1").IdProduit },
+
+        new Image { Nom="ProduitTest2", Url="https://latavernedutesteur.fr/wp-content/uploads/2017/11/testss.png",
+            IdProduit = produitsDb.First(p => p.Nom=="Nouveau Produit test E2E").IdProduit }
+    };
+            foreach (var img in images) await _imageRepository.AddAsync(img);
         }
+
 
 
         [HttpGet]
