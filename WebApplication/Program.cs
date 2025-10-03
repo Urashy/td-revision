@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using WebApplication;
-using WebApplication.Services;
 using WebApplication.Models;
+using WebApplication.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -16,6 +16,8 @@ builder.Services.AddScoped<IGenericService<Produit>, WebServiceGenerique<Produit
 builder.Services.AddScoped<IGenericService<Marque>, WebServiceGenerique<Marque>>();
 builder.Services.AddScoped<IGenericService<TypeProduit>, WebServiceGenerique<TypeProduit>>();
 builder.Services.AddScoped<IGenericService<Image>, WebServiceGenerique<Image>>();
+
+
 
 // Service de produits spécialisé
 builder.Services.AddScoped<IGenericService<Produit>, ProduitService>();

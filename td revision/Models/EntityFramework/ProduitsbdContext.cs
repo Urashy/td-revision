@@ -25,7 +25,6 @@ public partial class ProduitsbdContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        //=> optionsBuilder.UseNpgsql("Host=hopper.proxy.rlwy.net;Port=17710;Database=railway;Username=postgres;Password=lkxgcHxVHYPbGRRGTIbAYbrixXjriKpc;SSL Mode=Require;Trust Server Certificate=true");
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
