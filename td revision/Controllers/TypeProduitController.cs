@@ -11,11 +11,11 @@ namespace td_revision.Controllers
     public class TypeProduitController : ControllerBase
     {
         private readonly IMapper _mapper;
-        private readonly IDataRepository<TypeProduit> _typeProduitRepository;
-        private readonly IDataRepository<Produit> _produitRepository;
-        private readonly IDataRepository<Image> _imageRepository;
+        private readonly INamedRepository<TypeProduit> _typeProduitRepository;
+        private readonly INamedRepository<Produit> _produitRepository;
+        private readonly IRepository<Image> _imageRepository;
 
-        public TypeProduitController(IMapper mapper, IDataRepository<TypeProduit> typeProduitRepository, IDataRepository<Produit> produitRepository , IDataRepository<Image> imageRepository)
+        public TypeProduitController(IMapper mapper, INamedRepository<TypeProduit> typeProduitRepository, INamedRepository<Produit> produitRepository , IRepository<Image> imageRepository)
         {
             _mapper = mapper;
             _typeProduitRepository = typeProduitRepository;
@@ -28,11 +28,11 @@ namespace td_revision.Controllers
         public async Task<ActionResult<TypeProduitDTO>> GetById(int id)
         {
             var entity = await _typeProduitRepository.GetByIdAsync(id);
-            if (entity.Value == null)
+            if (entity == null)
             {
                 return NotFound();
             }
-            var dto = _mapper.Map<TypeProduitDTO>(entity.Value);
+            var dto = _mapper.Map<TypeProduitDTO>(entity);
             return Ok(dto);
         }
 
@@ -41,11 +41,11 @@ namespace td_revision.Controllers
         public async Task<ActionResult<IEnumerable<TypeProduitDTO>>> GetAll()
         {
             var entities = await _typeProduitRepository.GetAllAsync();
-            if (entities.Value == null)
+            if (entities == null)
             {
                 return NotFound();
             }
-            var dtos = _mapper.Map<IEnumerable<TypeProduitDTO>>(entities.Value);
+            var dtos = _mapper.Map<IEnumerable<TypeProduitDTO>>(entities);
             return Ok(dtos);
         }
 
@@ -53,12 +53,12 @@ namespace td_revision.Controllers
         [ActionName("GetByName")]
         public async Task<ActionResult<TypeProduitDTO>> GetByName([FromQuery] string name)
         {
-            var entity = await _typeProduitRepository.GetByStringAsync(name);
-            if (entity.Value == null)
+            var entity = await _typeProduitRepository.GetByNameAsync(name);
+            if (entity == null)
             {
                 return NotFound();
             }
-            var dto = _mapper.Map<TypeProduitDTO>(entity.Value);
+            var dto = _mapper.Map<TypeProduitDTO>(entity);
             return Ok(dto);
         }
 
@@ -86,13 +86,13 @@ namespace td_revision.Controllers
             try
             {
                 var entityToUpdate = await _typeProduitRepository.GetByIdAsync(id);
-                if (entityToUpdate.Value == null)
+                if (entityToUpdate == null)
                 {
                     return NotFound();
                 }
 
-                _mapper.Map(dto, entityToUpdate.Value);
-                await _typeProduitRepository.UpdateAsync(entityToUpdate.Value, entityToUpdate.Value);
+                _mapper.Map(dto, entityToUpdate);
+                await _typeProduitRepository.UpdateAsync(entityToUpdate);
                 return NoContent();
             }
             catch (Exception ex)
@@ -108,23 +108,23 @@ namespace td_revision.Controllers
             try
             {
                 var typeProduit = await _typeProduitRepository.GetByIdAsync(id);
-                if (typeProduit.Value == null)
+                if (typeProduit == null)
                 {
                     return NotFound();
                 }
 
                 // 1. Récupérer tous les produits de ce type
                 var allProducts = await _produitRepository.GetAllAsync();
-                if (allProducts.Value != null)
+                if (allProducts != null)
                 {
-                    var produitsASupprimer = allProducts.Value.Where(p => p.IdTypeProduit == id).ToList();
+                    var produitsASupprimer = allProducts.Where(p => p.IdTypeProduit == id).ToList();
 
 
                     var allimage = await _imageRepository.GetAllAsync();
 
-                    if (allimage.Value != null)
+                    if (allimage != null)
                     {
-                        var imagesASupprimer = allimage.Value.Where(i => produitsASupprimer.Any(p => p.IdProduit == i.IdProduit)).ToList();
+                        var imagesASupprimer = allimage.Where(i => produitsASupprimer.Any(p => p.IdProduit == i.IdProduit)).ToList();
                         foreach (var image in imagesASupprimer)
                         {
                             await _imageRepository.DeleteAsync(image);
@@ -141,7 +141,7 @@ namespace td_revision.Controllers
                 }
 
                 // 3. Supprimer le type de produit
-                await _typeProduitRepository.DeleteAsync(typeProduit.Value);
+                await _typeProduitRepository.DeleteAsync(typeProduit);
                 return NoContent();
             }
             catch (Exception ex)
@@ -158,12 +158,12 @@ namespace td_revision.Controllers
             try
             {
                 var allProducts = await _produitRepository.GetAllAsync();
-                if (allProducts.Value == null)
+                if (allProducts == null)
                 {
                     return 0;
                 }
 
-                var count = allProducts.Value.Count(p => p.IdTypeProduit == id);
+                var count = allProducts.Count(p => p.IdTypeProduit == id);
                 return Ok(count);
             }
             catch (Exception ex)

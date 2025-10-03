@@ -14,19 +14,19 @@ namespace td_revisionTests.Controllers.Tests
     public class ProduitControllerMockTests
     {
         private ProduitController _controller;
-        private Mock<IDataRepository<Produit>> _produitRepository;
-        private Mock<IDataRepository<Marque>> _marqueRepository;
-        private Mock<IDataRepository<TypeProduit>> _typeProduitRepository;
-        private Mock<IDataRepository<Image>> _imageRepository;
+        private Mock<INamedRepository<Produit>> _produitRepository;
+        private Mock<INamedRepository<Marque>> _marqueRepository;
+        private Mock<INamedRepository<TypeProduit>> _typeProduitRepository;
+        private Mock<IRepository<Image>> _imageRepository;
         private IMapper _mapper;
 
         [TestInitialize]
         public void Setup()
         {
-            _produitRepository = new Mock<IDataRepository<Produit>>();
-            _marqueRepository = new Mock<IDataRepository<Marque>>();
-            _typeProduitRepository = new Mock<IDataRepository<TypeProduit>>();
-            _imageRepository = new Mock<IDataRepository<Image>>();
+            _produitRepository = new Mock<INamedRepository<Produit>>();
+            _marqueRepository = new Mock<INamedRepository<Marque>>();
+            _typeProduitRepository = new Mock<INamedRepository<TypeProduit>>();
+            _imageRepository = new Mock<IRepository<Image>>();
 
             var config = new MapperConfiguration(cfg => cfg.AddProfile<MapperProfile>());
             _mapper = config.CreateMapper();
@@ -83,7 +83,8 @@ namespace td_revisionTests.Controllers.Tests
             // Given: Pas de produit trouvé par le manager
             _produitRepository
                 .Setup(repo => repo.GetByIdAsync(999))
-                .ReturnsAsync(new ActionResult<Produit>((Produit)null));
+                .ReturnsAsync((Produit)null);
+
 
             // When: On appelle la méthode GetById pour récupérer le produit
             ActionResult<ProduitDetailDTO> action = _controller.GetById(999).GetAwaiter().GetResult();
@@ -126,7 +127,7 @@ namespace td_revisionTests.Controllers.Tests
 
             _produitRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Produit>>(produitsInDb));
+                .ReturnsAsync(produitsInDb);
 
             // When: On récupère tous les produits
             var action = _controller.GetAll().GetAwaiter().GetResult();
@@ -157,7 +158,7 @@ namespace td_revisionTests.Controllers.Tests
             };
 
             _produitRepository
-                .Setup(repo => repo.GetByStringAsync("Air Max"))
+                .Setup(repo => repo.GetByNameAsync("Air Max"))
                 .ReturnsAsync(produitInDb);
 
             // When: On recherche le produit par son nom
@@ -171,7 +172,7 @@ namespace td_revisionTests.Controllers.Tests
             Assert.IsNotNull(produitDto);
             Assert.AreEqual("Air Max", produitDto.Nom);
 
-            _produitRepository.Verify(repo => repo.GetByStringAsync("Air Max"), Times.Once);
+            _produitRepository.Verify(repo => repo.GetByNameAsync("Air Max"), Times.Once);
         }
 
         [TestMethod]
@@ -193,11 +194,11 @@ namespace td_revisionTests.Controllers.Tests
             TypeProduit typeProduit = new() { IdTypeProduit = 1, Nom = "Chaussure" };
 
             _marqueRepository
-                .Setup(repo => repo.GetByStringAsync("Nike"))
+                .Setup(repo => repo.GetByNameAsync("Nike"))
                 .ReturnsAsync(marque);
 
             _typeProduitRepository
-                .Setup(repo => repo.GetByStringAsync("Chaussure"))
+                .Setup(repo => repo.GetByNameAsync("Chaussure"))
                 .ReturnsAsync(typeProduit);
 
             _produitRepository
@@ -210,8 +211,8 @@ namespace td_revisionTests.Controllers.Tests
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action.Result, typeof(CreatedAtActionResult));
 
-            _marqueRepository.Verify(repo => repo.GetByStringAsync("Nike"), Times.Once);
-            _typeProduitRepository.Verify(repo => repo.GetByStringAsync("Chaussure"), Times.Once);
+            _marqueRepository.Verify(repo => repo.GetByNameAsync("Nike"), Times.Once);
+            _typeProduitRepository.Verify(repo => repo.GetByNameAsync("Chaussure"), Times.Once);
             _produitRepository.Verify(repo => repo.AddAsync(It.IsAny<Produit>()), Times.Once);
         }
 
@@ -252,7 +253,7 @@ namespace td_revisionTests.Controllers.Tests
             };
 
             _marqueRepository
-                .Setup(repo => repo.GetByStringAsync("MarqueInexistante"))
+                .Setup(repo => repo.GetByNameAsync("MarqueInexistante"))
                 .ReturnsAsync((Marque)null);
 
             // When: On essaie d'ajouter le produit
@@ -262,7 +263,7 @@ namespace td_revisionTests.Controllers.Tests
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action.Result, typeof(BadRequestObjectResult));
 
-            _marqueRepository.Verify(repo => repo.GetByStringAsync("MarqueInexistante"), Times.Once);
+            _marqueRepository.Verify(repo => repo.GetByNameAsync("MarqueInexistante"), Times.Once);
             _produitRepository.Verify(repo => repo.AddAsync(It.IsAny<Produit>()), Times.Never);
         }
 
@@ -282,11 +283,11 @@ namespace td_revisionTests.Controllers.Tests
             Marque marque = new() { IdMarque = 1, Nom = "Nike" };
 
             _marqueRepository
-                .Setup(repo => repo.GetByStringAsync("Nike"))
+                .Setup(repo => repo.GetByNameAsync("Nike"))
                 .ReturnsAsync(marque);
 
             _typeProduitRepository
-                .Setup(repo => repo.GetByStringAsync("TypeInexistant"))
+                .Setup(repo => repo.GetByNameAsync("TypeInexistant"))
                 .ReturnsAsync((TypeProduit)null);
 
             // When: On essaie d'ajouter le produit
@@ -296,8 +297,8 @@ namespace td_revisionTests.Controllers.Tests
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action.Result, typeof(BadRequestObjectResult));
 
-            _marqueRepository.Verify(repo => repo.GetByStringAsync("Nike"), Times.Once);
-            _typeProduitRepository.Verify(repo => repo.GetByStringAsync("TypeInexistant"), Times.Once);
+            _marqueRepository.Verify(repo => repo.GetByNameAsync("Nike"), Times.Once);
+            _typeProduitRepository.Verify(repo => repo.GetByNameAsync("TypeInexistant"), Times.Once);
             _produitRepository.Verify(repo => repo.AddAsync(It.IsAny<Produit>()), Times.Never);
         }
 
@@ -331,15 +332,15 @@ namespace td_revisionTests.Controllers.Tests
                 .ReturnsAsync(produitToEdit);
 
             _marqueRepository
-                .Setup(repo => repo.GetByStringAsync("Nike"))
+                .Setup(repo => repo.GetByNameAsync("Nike"))
                 .ReturnsAsync(marque);
 
             _typeProduitRepository
-                .Setup(repo => repo.GetByStringAsync("Chaussure"))
+                .Setup(repo => repo.GetByNameAsync("Chaussure"))
                 .ReturnsAsync(typeProduit);
 
             _produitRepository
-                .Setup(repo => repo.UpdateAsync(produitToEdit, It.IsAny<Produit>()));
+                .Setup(repo => repo.UpdateAsync(produitToEdit));
 
             // When: On met à jour le produit
             IActionResult action = _controller.Update(produitToEdit.IdProduit, updatedDto).GetAwaiter().GetResult();
@@ -349,7 +350,7 @@ namespace td_revisionTests.Controllers.Tests
             Assert.IsInstanceOfType(action, typeof(NoContentResult));
 
             _produitRepository.Verify(repo => repo.GetByIdAsync(produitToEdit.IdProduit), Times.Once);
-            _produitRepository.Verify(repo => repo.UpdateAsync(produitToEdit, It.IsAny<Produit>()), Times.Once);
+            _produitRepository.Verify(repo => repo.UpdateAsync(produitToEdit), Times.Once);
         }
 
         [TestMethod]
@@ -374,7 +375,7 @@ namespace td_revisionTests.Controllers.Tests
             Assert.IsInstanceOfType(action, typeof(NotFoundResult));
 
             _produitRepository.Verify(repo => repo.GetByIdAsync(999), Times.Once);
-            _produitRepository.Verify(repo => repo.UpdateAsync(It.IsAny<Produit>(), It.IsAny<Produit>()), Times.Never);
+            _produitRepository.Verify(repo => repo.UpdateAsync(It.IsAny<Produit>()), Times.Never);
         }
 
         [TestMethod]
@@ -393,7 +394,7 @@ namespace td_revisionTests.Controllers.Tests
 
             _imageRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Image>>(new List<Image>()));
+                .ReturnsAsync(new List<Image>());
 
             _produitRepository
                 .Setup(repo => repo.DeleteAsync(produitInDb));
@@ -431,7 +432,7 @@ namespace td_revisionTests.Controllers.Tests
 
             _imageRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Image>>(images));
+                .ReturnsAsync(images);
 
             _imageRepository
                 .Setup(repo => repo.DeleteAsync(It.IsAny<Image>()));
@@ -502,7 +503,7 @@ namespace td_revisionTests.Controllers.Tests
 
             _produitRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Produit>>(produitsInDb));
+                .ReturnsAsync(produitsInDb);
 
             // When: On filtre par marque Nike
             var action = _controller.GetFiltered(null, "Nike", null).GetAwaiter().GetResult();
@@ -551,7 +552,7 @@ namespace td_revisionTests.Controllers.Tests
 
             _produitRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Produit>>(produitsInDb));
+                .ReturnsAsync(produitsInDb);
 
             // When: On filtre par type Chaussure
             var action = _controller.GetFiltered(null, null, "Chaussure").GetAwaiter().GetResult();
@@ -602,7 +603,7 @@ namespace td_revisionTests.Controllers.Tests
 
             _produitRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Produit>>(produitsInDb));
+                .ReturnsAsync(produitsInDb);
 
             // When: On recherche par terme "confortable"
             var action = _controller.GetFiltered("confortable", null, null).GetAwaiter().GetResult();
@@ -624,7 +625,8 @@ namespace td_revisionTests.Controllers.Tests
             // Given: Aucun produit en base
             _produitRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Produit>>((IEnumerable<Produit>)null));
+                .ReturnsAsync((IEnumerable<Produit>)null);
+
 
             // When: On recherche des produits
             var action = _controller.GetFiltered(null, null, null).GetAwaiter().GetResult();

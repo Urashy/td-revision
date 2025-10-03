@@ -11,14 +11,13 @@ var connectionString = builder.Configuration.GetConnectionString("LocalConnectio
 builder.Services.AddDbContext<ProduitsbdContext>(options =>
     options.UseNpgsql(connectionString));
 
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorClient",
         policy =>
         {
             policy.SetIsOriginAllowed(origin =>
-                new Uri(origin).Host == "localhost") 
+                new Uri(origin).Host == "localhost")
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -31,11 +30,22 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ProduitsbdContext>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// Utilise les managers spécialisés (ils héritent de ManagerGenerique)
-builder.Services.AddScoped<IDataRepository<Produit>, ProduitManager>();
-builder.Services.AddScoped<IDataRepository<Marque>, MarqueManager>();
-builder.Services.AddScoped<IDataRepository<TypeProduit>, TypeProduitManager>();
-builder.Services.AddScoped<IDataRepository<Image>, ImageManager>();
+// ========== ENREGISTREMENT DES REPOSITORIES ==========
+
+// Repositories avec recherche par nom (INamedRepository)
+builder.Services.AddScoped<INamedRepository<Produit>, ProduitManager>();
+builder.Services.AddScoped<INamedRepository<Marque>, MarqueManager>();
+builder.Services.AddScoped<INamedRepository<TypeProduit>, TypeProduitManager>();
+
+// Repository sans recherche par nom (IRepository seulement)
+builder.Services.AddScoped<IRepository<Image>, ImageManager>();
+
+
+// Pour la compatibilité avec SeedController qui utilise encore l'ancienne interface
+// On enregistre aussi les IRepository<T> pour les entités qui ont INamedRepository
+builder.Services.AddScoped<IRepository<Produit>>(sp => sp.GetRequiredService<INamedRepository<Produit>>());
+builder.Services.AddScoped<IRepository<Marque>>(sp => sp.GetRequiredService<INamedRepository<Marque>>());
+builder.Services.AddScoped<IRepository<TypeProduit>>(sp => sp.GetRequiredService<INamedRepository<TypeProduit>>());
 
 var app = builder.Build();
 
@@ -44,7 +54,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 
 app.UseCors("AllowBlazorClient");
 app.UseHttpsRedirection();

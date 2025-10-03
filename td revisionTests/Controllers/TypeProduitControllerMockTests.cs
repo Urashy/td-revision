@@ -14,17 +14,17 @@ namespace td_revisionTests.Controllers.Tests
     public class TypeProduitControllerMockTests
     {
         private TypeProduitController _controller;
-        private Mock<IDataRepository<TypeProduit>> _typeProduitRepository;
-        private Mock<IDataRepository<Produit>> _produitRepository;
-        private Mock<IDataRepository<Image>> _imageRepository;
+        private Mock<INamedRepository<TypeProduit>> _typeProduitRepository;
+        private Mock<INamedRepository<Produit>> _produitRepository;
+        private Mock<IRepository<Image>> _imageRepository;
         private IMapper _mapper;
 
         [TestInitialize]
         public void Setup()
         {
-            _typeProduitRepository = new Mock<IDataRepository<TypeProduit>>();
-            _produitRepository = new Mock<IDataRepository<Produit>>();
-            _imageRepository = new Mock<IDataRepository<Image>>();
+            _typeProduitRepository = new Mock<INamedRepository<TypeProduit>>();
+            _produitRepository = new Mock<INamedRepository<Produit>>();
+            _imageRepository = new Mock<IRepository<Image>>();
 
             var config = new MapperConfiguration(cfg => cfg.AddProfile<MapperProfile>());
             _mapper = config.CreateMapper();
@@ -35,7 +35,7 @@ namespace td_revisionTests.Controllers.Tests
         [TestMethod]
         public void ShouldGetTypeProduitById()
         {
-            // Given: Un type de produit enregistré
+            // Given
             TypeProduit typeProduitInDb = new()
             {
                 IdTypeProduit = 1,
@@ -46,10 +46,10 @@ namespace td_revisionTests.Controllers.Tests
                 .Setup(repo => repo.GetByIdAsync(typeProduitInDb.IdTypeProduit))
                 .ReturnsAsync(typeProduitInDb);
 
-            // When: On récupère le type de produit par son ID
+            // When
             ActionResult<TypeProduitDTO> action = _controller.GetById(typeProduitInDb.IdTypeProduit).GetAwaiter().GetResult();
 
-            // Then: Le type de produit est retourné avec un code 200
+            // Then
             _typeProduitRepository.Verify(repo => repo.GetByIdAsync(typeProduitInDb.IdTypeProduit), Times.Once);
 
             Assert.IsNotNull(action);
@@ -63,24 +63,23 @@ namespace td_revisionTests.Controllers.Tests
         [TestMethod]
         public void GetTypeProduitByIdShouldReturnNotFound()
         {
-            // Given: Pas de type de produit trouvé par le manager
+            // Given
             _typeProduitRepository
                 .Setup(repo => repo.GetByIdAsync(999))
-                .ReturnsAsync(new ActionResult<TypeProduit>((TypeProduit)null));
+                .ReturnsAsync((TypeProduit)null);
 
-            // When: On appelle la méthode GetById pour récupérer le type de produit
+            // When
             ActionResult<TypeProduitDTO> action = _controller.GetById(999).GetAwaiter().GetResult();
 
-            // Then: Un code 404 est retourné
+            // Then
             Assert.IsInstanceOfType(action.Result, typeof(NotFoundResult));
-
             _typeProduitRepository.Verify(repo => repo.GetByIdAsync(999), Times.Once);
         }
 
         [TestMethod]
         public void ShouldGetAllTypeProduits()
         {
-            // Given: Des types de produits enregistrés
+            // Given
             IEnumerable<TypeProduit> typeProduitsInDb = new List<TypeProduit>
             {
                 new TypeProduit { IdTypeProduit = 1, Nom = "Chaussure" },
@@ -90,12 +89,12 @@ namespace td_revisionTests.Controllers.Tests
 
             _typeProduitRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<TypeProduit>>(typeProduitsInDb));
+                .ReturnsAsync(typeProduitsInDb);
 
-            // When: On récupère tous les types de produits
+            // When
             var action = _controller.GetAll().GetAwaiter().GetResult();
 
-            // Then: Tous les types de produits sont retournés
+            // Then
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action.Result, typeof(OkObjectResult));
             var okResult = action.Result as OkObjectResult;
@@ -109,7 +108,7 @@ namespace td_revisionTests.Controllers.Tests
         [TestMethod]
         public void ShouldGetTypeProduitByName()
         {
-            // Given: Un type de produit avec un nom spécifique
+            // Given
             TypeProduit typeProduitInDb = new()
             {
                 IdTypeProduit = 1,
@@ -117,13 +116,13 @@ namespace td_revisionTests.Controllers.Tests
             };
 
             _typeProduitRepository
-                .Setup(repo => repo.GetByStringAsync("Chaussure"))
+                .Setup(repo => repo.GetByNameAsync("Chaussure"))
                 .ReturnsAsync(typeProduitInDb);
 
-            // When: On recherche le type de produit par son nom
+            // When
             ActionResult<TypeProduitDTO> action = _controller.GetByName("Chaussure").GetAwaiter().GetResult();
 
-            // Then: Le type de produit est retourné
+            // Then
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action.Result, typeof(OkObjectResult));
             var okResult = action.Result as OkObjectResult;
@@ -131,23 +130,22 @@ namespace td_revisionTests.Controllers.Tests
             Assert.IsNotNull(typeProduitDto);
             Assert.AreEqual("Chaussure", typeProduitDto.Nom);
 
-            _typeProduitRepository.Verify(repo => repo.GetByStringAsync("Chaussure"), Times.Once);
+            _typeProduitRepository.Verify(repo => repo.GetByNameAsync("Chaussure"), Times.Once);
         }
 
         [TestMethod]
         public void ShouldAddTypeProduit()
         {
-            // Given: Un type de produit à ajouter
+            // Given
             TypeProduitDTO typeProduitDto = new() { Nom = "Électronique" };
-            TypeProduit typeProduit = new() { IdTypeProduit = 1, Nom = "Électronique" };
 
             _typeProduitRepository
                 .Setup(repo => repo.AddAsync(It.IsAny<TypeProduit>()));
 
-            // When: On ajoute le type de produit
+            // When
             ActionResult<TypeProduitDTO> action = _controller.Add(typeProduitDto).GetAwaiter().GetResult();
 
-            // Then: Le type de produit est créé avec un code 201
+            // Then
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action.Result, typeof(CreatedAtActionResult));
 
@@ -157,7 +155,7 @@ namespace td_revisionTests.Controllers.Tests
         [TestMethod]
         public void ShouldUpdateTypeProduit()
         {
-            // Given: Un type de produit à mettre à jour
+            // Given
             TypeProduit typeProduitToEdit = new()
             {
                 IdTypeProduit = 1,
@@ -175,23 +173,23 @@ namespace td_revisionTests.Controllers.Tests
                 .ReturnsAsync(typeProduitToEdit);
 
             _typeProduitRepository
-                .Setup(repo => repo.UpdateAsync(typeProduitToEdit, It.IsAny<TypeProduit>()));
+                .Setup(repo => repo.UpdateAsync(typeProduitToEdit));
 
-            // When: On met à jour le type de produit
+            // When
             IActionResult action = _controller.Update(typeProduitToEdit.IdTypeProduit, updatedDto).GetAwaiter().GetResult();
 
-            // Then: Le type de produit est mis à jour avec un code 204
+            // Then
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action, typeof(NoContentResult));
 
             _typeProduitRepository.Verify(repo => repo.GetByIdAsync(typeProduitToEdit.IdTypeProduit), Times.Once);
-            _typeProduitRepository.Verify(repo => repo.UpdateAsync(typeProduitToEdit, It.IsAny<TypeProduit>()), Times.Once);
+            _typeProduitRepository.Verify(repo => repo.UpdateAsync(typeProduitToEdit), Times.Once);
         }
 
         [TestMethod]
         public void UpdateTypeProduitShouldReturnNotFoundWhenTypeProduitDoesNotExist()
         {
-            // Given: Un type de produit qui n'existe pas
+            // Given
             TypeProduitDTO typeProduitDto = new()
             {
                 IdTypeProduit = 999,
@@ -202,21 +200,21 @@ namespace td_revisionTests.Controllers.Tests
                 .Setup(repo => repo.GetByIdAsync(999))
                 .ReturnsAsync((TypeProduit)null);
 
-            // When: On essaie de mettre à jour le type de produit
+            // When
             IActionResult action = _controller.Update(999, typeProduitDto).GetAwaiter().GetResult();
 
-            // Then: Un code 404 est retourné
+            // Then
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action, typeof(NotFoundResult));
 
             _typeProduitRepository.Verify(repo => repo.GetByIdAsync(999), Times.Once);
-            _typeProduitRepository.Verify(repo => repo.UpdateAsync(It.IsAny<TypeProduit>(), It.IsAny<TypeProduit>()), Times.Never);
+            _typeProduitRepository.Verify(repo => repo.UpdateAsync(It.IsAny<TypeProduit>()), Times.Never);
         }
 
         [TestMethod]
         public void ShouldDeleteTypeProduit()
         {
-            // Given: Un type de produit sans produits
+            // Given
             TypeProduit typeProduitInDb = new()
             {
                 IdTypeProduit = 1,
@@ -225,24 +223,24 @@ namespace td_revisionTests.Controllers.Tests
 
             _typeProduitRepository
                 .Setup(repo => repo.GetByIdAsync(typeProduitInDb.IdTypeProduit))
-                .ReturnsAsync(new ActionResult<TypeProduit>(typeProduitInDb));
+                .ReturnsAsync(typeProduitInDb);
 
             _produitRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Produit>>(new List<Produit>()));
+                .ReturnsAsync(new List<Produit>());
 
             _imageRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Image>>(new List<Image>()));
+                .ReturnsAsync(new List<Image>());
 
             _typeProduitRepository
                 .Setup(repo => repo.DeleteAsync(typeProduitInDb))
                 .Returns(Task.CompletedTask);
 
-            // When: On supprime le type de produit
+            // When
             IActionResult action = _controller.Delete(typeProduitInDb.IdTypeProduit).GetAwaiter().GetResult();
 
-            // Then: Le type de produit est supprimé avec un code 204
+            // Then
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action, typeof(NoContentResult));
 
@@ -250,11 +248,10 @@ namespace td_revisionTests.Controllers.Tests
             _typeProduitRepository.Verify(repo => repo.DeleteAsync(typeProduitInDb), Times.Once);
         }
 
-
         [TestMethod]
         public void ShouldDeleteTypeProduitWithProducts()
         {
-            // Given: Un type de produit avec des produits et images
+            // Given
             TypeProduit typeProduitInDb = new()
             {
                 IdTypeProduit = 1,
@@ -279,11 +276,11 @@ namespace td_revisionTests.Controllers.Tests
 
             _produitRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Produit>>(produits));
+                .ReturnsAsync(produits);
 
             _imageRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Image>>(images));
+                .ReturnsAsync(images);
 
             _imageRepository
                 .Setup(repo => repo.DeleteAsync(It.IsAny<Image>()));
@@ -294,10 +291,10 @@ namespace td_revisionTests.Controllers.Tests
             _typeProduitRepository
                 .Setup(repo => repo.DeleteAsync(typeProduitInDb));
 
-            // When: On supprime le type de produit
+            // When
             IActionResult action = _controller.Delete(typeProduitInDb.IdTypeProduit).GetAwaiter().GetResult();
 
-            // Then: Le type de produit, ses produits et leurs images sont supprimés
+            // Then
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action, typeof(NoContentResult));
 
@@ -310,15 +307,15 @@ namespace td_revisionTests.Controllers.Tests
         [TestMethod]
         public void DeleteTypeProduitShouldReturnNotFoundWhenTypeProduitDoesNotExist()
         {
-            // Given: Aucun type de produit en base
+            // Given
             _typeProduitRepository
                 .Setup(repo => repo.GetByIdAsync(999))
                 .ReturnsAsync((TypeProduit)null);
 
-            // When: On essaie de supprimer un type de produit qui n'existe pas
+            // When
             IActionResult action = _controller.Delete(999).GetAwaiter().GetResult();
 
-            // Then: Un code 404 est retourné
+            // Then
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action, typeof(NotFoundResult));
 
@@ -329,7 +326,7 @@ namespace td_revisionTests.Controllers.Tests
         [TestMethod]
         public void ShouldGetProduitsCount()
         {
-            // Given: Un type de produit avec plusieurs produits
+            // Given
             List<Produit> produits = new()
             {
                 new Produit { IdProduit = 1, Nom = "Air Max", IdTypeProduit = 1 },
@@ -340,12 +337,12 @@ namespace td_revisionTests.Controllers.Tests
 
             _produitRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Produit>>(produits));
+                .ReturnsAsync(produits);
 
-            // When: On récupère le nombre de produits
+            // When
             var action = _controller.GetProduitsCount(1).GetAwaiter().GetResult();
 
-            // Then: Le bon nombre de produits est retourné
+            // Then
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action.Result, typeof(OkObjectResult));
             var okResult = action.Result as OkObjectResult;

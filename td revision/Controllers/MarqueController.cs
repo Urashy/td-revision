@@ -11,11 +11,15 @@ namespace td_revision.Controllers
     public class MarqueController : ControllerBase
     {
         private readonly IMapper _mapper;
-        private readonly IDataRepository<Marque> _marqueRepository;
-        private readonly IDataRepository<Produit> _produitRepository;
-        private readonly IDataRepository<Image> _imageRepository;
+        private readonly INamedRepository<Marque> _marqueRepository;
+        private readonly IRepository<Produit> _produitRepository;
+        private readonly IRepository<Image> _imageRepository;
 
-        public MarqueController(IMapper mapper, IDataRepository<Marque> marqueRepository, IDataRepository<Produit> produitRepository, IDataRepository<Image> imageRepository)
+        public MarqueController(
+            IMapper mapper,
+            INamedRepository<Marque> marqueRepository,
+            IRepository<Produit> produitRepository,
+            IRepository<Image> imageRepository)
         {
             _mapper = mapper;
             _marqueRepository = marqueRepository;
@@ -28,11 +32,11 @@ namespace td_revision.Controllers
         public async Task<ActionResult<MarqueDTO>> GetById(int id)
         {
             var entity = await _marqueRepository.GetByIdAsync(id);
-            if (entity.Value == null)
+            if (entity == null)
             {
                 return NotFound();
             }
-            var dto = _mapper.Map<MarqueDTO>(entity.Value);
+            var dto = _mapper.Map<MarqueDTO>(entity);
             return Ok(dto);
         }
 
@@ -41,11 +45,11 @@ namespace td_revision.Controllers
         public async Task<ActionResult<IEnumerable<MarqueDTO>>> GetAll()
         {
             var entities = await _marqueRepository.GetAllAsync();
-            if (entities.Value == null)
+            if (entities == null)
             {
                 return NotFound();
             }
-            var dtos = _mapper.Map<IEnumerable<MarqueDTO>>(entities.Value);
+            var dtos = _mapper.Map<IEnumerable<MarqueDTO>>(entities);
             return Ok(dtos);
         }
 
@@ -53,12 +57,12 @@ namespace td_revision.Controllers
         [ActionName("GetByName")]
         public async Task<ActionResult<MarqueDTO>> GetByName([FromQuery] string name)
         {
-            var entity = await _marqueRepository.GetByStringAsync(name);
-            if (entity.Value == null)
+            var entity = await _marqueRepository.GetByNameAsync(name);
+            if (entity == null)
             {
                 return NotFound();
             }
-            var dto = _mapper.Map<MarqueDTO>(entity.Value);
+            var dto = _mapper.Map<MarqueDTO>(entity);
             return Ok(dto);
         }
 
@@ -86,13 +90,13 @@ namespace td_revision.Controllers
             try
             {
                 var entityToUpdate = await _marqueRepository.GetByIdAsync(id);
-                if (entityToUpdate.Value == null)
+                if (entityToUpdate == null)
                 {
                     return NotFound();
                 }
 
-                _mapper.Map(dto, entityToUpdate.Value);
-                await _marqueRepository.UpdateAsync(entityToUpdate.Value, entityToUpdate.Value);
+                _mapper.Map(dto, entityToUpdate);
+                await _marqueRepository.UpdateAsync(entityToUpdate);
                 return NoContent();
             }
             catch (Exception ex)
@@ -108,22 +112,22 @@ namespace td_revision.Controllers
             try
             {
                 var marque = await _marqueRepository.GetByIdAsync(id);
-                if (marque.Value == null)
+                if (marque == null)
                 {
                     return NotFound();
                 }
 
                 // 1. Récupérer tous les produits de cette marque
                 var allProducts = await _produitRepository.GetAllAsync();
-                if (allProducts.Value != null)
+                if (allProducts != null)
                 {
-                    var produitsASupprimer = allProducts.Value.Where(p => p.IdMarque == id).ToList();
+                    var produitsASupprimer = allProducts.Where(p => p.IdMarque == id).ToList();
 
                     var allimage = await _imageRepository.GetAllAsync();
 
-                    if (allimage.Value != null)
+                    if (allimage != null)
                     {
-                        var imagesASupprimer = allimage.Value.Where(i => produitsASupprimer.Any(p => p.IdProduit == i.IdProduit)).ToList();
+                        var imagesASupprimer = allimage.Where(i => produitsASupprimer.Any(p => p.IdProduit == i.IdProduit)).ToList();
                         foreach (var image in imagesASupprimer)
                         {
                             await _imageRepository.DeleteAsync(image);
@@ -139,7 +143,7 @@ namespace td_revision.Controllers
                 }
 
                 // 3. Supprimer la marque
-                await _marqueRepository.DeleteAsync(marque.Value);
+                await _marqueRepository.DeleteAsync(marque);
                 return NoContent();
             }
             catch (Exception ex)
@@ -156,12 +160,12 @@ namespace td_revision.Controllers
             try
             {
                 var allProducts = await _produitRepository.GetAllAsync();
-                if (allProducts.Value == null)
+                if (allProducts == null)
                 {
                     return 0;
                 }
 
-                var count = allProducts.Value.Count(p => p.IdMarque == id);
+                var count = allProducts.Count(p => p.IdMarque == id);
                 return Ok(count);
             }
             catch (Exception ex)

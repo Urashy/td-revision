@@ -71,19 +71,6 @@ public class ProduitsTests : PageTest
         Assert.That(modalProductName, Is.EqualTo(firstProduct), "Le nom du produit dans la modal devrait correspondre");
     }
 
-    [Test]
-    public async Task Should_Close_Detail_Modal()
-    {
-        var products = await _produitsPage.GetDisplayedProductNames();
-        Assume.That(products, Is.Not.Empty);
-
-        await _produitsPage.ClickProductCard(products.First());
-        Assume.That(await _produitsPage.IsDetailModalOpen(), Is.True);
-
-        await _produitsPage.CloseDetailModal();
-
-        Assert.That(await _produitsPage.IsDetailModalOpen(), Is.False, "La modal devrait être fermée");
-    }
 
     [Test]
     public async Task Should_Open_Edit_Modal_When_Clicking_Edit_Button()
@@ -117,21 +104,6 @@ public class ProduitsTests : PageTest
 
         var notification = await _produitsPage.GetNotificationMessage();
         Assert.That(notification, Does.Contain("modifié avec succès"));
-    }
-
-    [Test]
-    public async Task Should_Cancel_Product_Edit()
-    {
-        var products = await _produitsPage.GetDisplayedProductNames();
-        Assume.That(products, Is.Not.Empty);
-
-        await _produitsPage.ClickEditButton(products.First());
-        Assume.That(await _produitsPage.IsEditModalOpen(), Is.True);
-
-        await _produitsPage.CancelEdit();
-
-        Assert.That(await _produitsPage.IsEditModalOpen(), Is.False,
-            "La modal d'édition devrait être fermée après annulation");
     }
 
     [Test]

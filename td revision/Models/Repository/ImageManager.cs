@@ -6,25 +6,17 @@ namespace td_revision.Models.Repository
 {
     public class ImageManager : ManagerGenerique<Image>
     {
-        private readonly ProduitsbdContext _context;
         public ImageManager(ProduitsbdContext context) : base(context)
         {
-            _context = context;
         }
 
-
-        public async Task<ActionResult<IEnumerable<Image>>> GetByProduitIdAsync(int produitId)
+        // Méthode spécifique aux images
+        public async Task<IEnumerable<Image>> GetByProduitIdAsync(int produitId)
         {
-            var images = await dbSet
+            return await dbSet
                 .Where(i => i.IdProduit == produitId)
                 .ToListAsync();
-
-            return images;
         }
 
-        public override async Task<ActionResult<Image?>> GetByStringAsync(string str)
-        {
-            return await dbSet.FirstOrDefaultAsync(i => i.Nom == str);
-        }
     }
 }

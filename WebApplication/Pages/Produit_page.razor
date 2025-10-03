@@ -715,8 +715,13 @@ else
         searchNom = "";
         selectedType = "";
         selectedMarque = "";
+
         await LoadFilteredProduits();
+        await LoadProductImages();
+
+        StateHasChanged();
     }
+
 
     // Méthodes pour les modals de détails
     private async Task VoirDetails(int produitId)

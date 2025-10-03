@@ -119,35 +119,6 @@ namespace td_revisionTests.Controllers.Tests
         }
 
         [TestMethod]
-        public async Task ShouldGetImageByName()
-        {
-            // Given: Une image avec un nom spécifique
-            var produit = new Produit { Nom = "Test Produit" };
-            _context.Produits.Add(produit);
-            await _context.SaveChangesAsync();
-
-            var image = new Image
-            {
-                Nom = "Image Unique",
-                Url = "https://test.com/unique.jpg",
-                IdProduit = produit.IdProduit
-            };
-            _context.Images.Add(image);
-            await _context.SaveChangesAsync();
-
-            // When: On recherche l'image par son nom
-            var result = await _controller.GetByName("Image Unique");
-
-            // Then: L'image est retournée
-            Assert.IsNotNull(result);
-            Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
-            var okResult = result.Result as OkObjectResult;
-            var imageDto = okResult.Value as ImageDTO;
-            Assert.IsNotNull(imageDto);
-            Assert.AreEqual("Image Unique", imageDto.Nom);
-        }
-
-        [TestMethod]
         public async Task ShouldGetImagesByProduitId()
         {
             // Given: Plusieurs images associées à un produit

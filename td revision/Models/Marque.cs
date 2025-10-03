@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using td_revision.Models.Repository;
 
 namespace td_revision.Models
 {
     [Table("t_e_marque_mrq")]
-    public class Marque : IEntity
+    public class Marque : IEntity, INamedEntity
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

@@ -4,31 +4,31 @@ using td_revision.Models.EntityFramework;
 
 namespace td_revision.Models.Repository
 {
-    public class TypeProduitManager : ManagerGenerique<TypeProduit>
+    public class TypeProduitManager : NamedManagerGenerique<TypeProduit>
     {
         public TypeProduitManager(ProduitsbdContext context) : base(context)
         {
         }
 
-        public override async Task<ActionResult<IEnumerable<TypeProduit>>> GetAllAsync()
+        public override async Task<IEnumerable<TypeProduit>> GetAllAsync()
         {
             return await dbSet
-                .Include(m => m.Produits)
+                .Include(t => t.Produits)
                 .ToListAsync();
         }
 
-        public override async Task<ActionResult<TypeProduit?>> GetByIdAsync(int id)
+        public override async Task<TypeProduit?> GetByIdAsync(int id)
         {
             return await dbSet
-                .Include(m => m.Produits)
-                .FirstOrDefaultAsync(m => m.IdTypeProduit == id);
+                .Include(t => t.Produits)
+                .FirstOrDefaultAsync(t => t.IdTypeProduit == id);
         }
 
-        public override async Task<ActionResult<TypeProduit?>> GetByStringAsync(string str)
+        public override async Task<TypeProduit?> GetByNameAsync(string name)
         {
             return await dbSet
-                .Include(m => m.Produits)
-                .FirstOrDefaultAsync(m => m.Nom == str);
+                .Include(t => t.Produits)
+                .FirstOrDefaultAsync(t => t.Nom == name);
         }
     }
 }

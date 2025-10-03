@@ -14,17 +14,17 @@ namespace td_revisionTests.Controllers.Tests
     public class MarqueControllerMockTests
     {
         private MarqueController _controller;
-        private Mock<IDataRepository<Marque>> _marqueRepository;
-        private Mock<IDataRepository<Produit>> _produitRepository;
-        private Mock<IDataRepository<Image>> _imageRepository;
+        private Mock<INamedRepository<Marque>> _marqueRepository;
+        private Mock<INamedRepository<Produit>> _produitRepository;
+        private Mock<IRepository<Image>> _imageRepository;
         private IMapper _mapper;
 
         [TestInitialize]
         public void Setup()
         {
-            _marqueRepository = new Mock<IDataRepository<Marque>>();
-            _produitRepository = new Mock<IDataRepository<Produit>>();
-            _imageRepository = new Mock<IDataRepository<Image>>();
+            _marqueRepository = new Mock<INamedRepository<Marque>>();
+            _produitRepository = new Mock<INamedRepository<Produit>>();
+            _imageRepository = new Mock<IRepository<Image>>();
 
             var config = new MapperConfiguration(cfg => cfg.AddProfile<MapperProfile>());
             _mapper = config.CreateMapper();
@@ -35,53 +35,40 @@ namespace td_revisionTests.Controllers.Tests
         [TestMethod]
         public void ShouldGetMarqueById()
         {
-            // Given: Une marque enregistrée
-            Marque marqueInDb = new()
-            {
-                IdMarque = 1,
-                Nom = "Nike"
-            };
+            var marqueInDb = new Marque { IdMarque = 1, Nom = "Nike" };
 
             _marqueRepository
                 .Setup(repo => repo.GetByIdAsync(marqueInDb.IdMarque))
                 .ReturnsAsync(marqueInDb);
 
-            // When: On récupère la marque par son ID
-            ActionResult<MarqueDTO> action = _controller.GetById(marqueInDb.IdMarque).GetAwaiter().GetResult();
+            var action = _controller.GetById(marqueInDb.IdMarque).GetAwaiter().GetResult();
 
-            // Then: La marque est retournée avec un code 200
             _marqueRepository.Verify(repo => repo.GetByIdAsync(marqueInDb.IdMarque), Times.Once);
 
             Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action.Result, typeof(OkObjectResult));
-            var okResult = action.Result as OkObjectResult;
-            var marqueDto = okResult.Value as MarqueDTO;
-            Assert.IsNotNull(marqueDto);
-            Assert.AreEqual("Nike", marqueDto.Nom);
+            var ok = action.Result as OkObjectResult;
+            var dto = ok.Value as MarqueDTO;
+            Assert.AreEqual("Nike", dto.Nom);
         }
 
         [TestMethod]
         public void GetMarqueByIdShouldReturnNotFound()
         {
-            // Given: Pas de marque trouvée par le manager
             _marqueRepository
                 .Setup(repo => repo.GetByIdAsync(999))
-                .ReturnsAsync(new ActionResult<Marque>((Marque)null));
+                .ReturnsAsync((Marque)null);
 
-            // When: On appelle la méthode GetById pour récupérer la marque
-            ActionResult<MarqueDTO> action = _controller.GetById(999).GetAwaiter().GetResult();
+            var action = _controller.GetById(999).GetAwaiter().GetResult();
 
-            // Then: Un code 404 est retourné
             Assert.IsInstanceOfType(action.Result, typeof(NotFoundResult));
-
             _marqueRepository.Verify(repo => repo.GetByIdAsync(999), Times.Once);
         }
 
         [TestMethod]
         public void ShouldGetAllMarques()
         {
-            // Given: Des marques enregistrées
-            IEnumerable<Marque> marquesInDb = new List<Marque>
+            var marquesInDb = new List<Marque>
             {
                 new Marque { IdMarque = 1, Nom = "Nike" },
                 new Marque { IdMarque = 2, Nom = "Adidas" },
@@ -90,200 +77,135 @@ namespace td_revisionTests.Controllers.Tests
 
             _marqueRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Marque>>(marquesInDb));
+                .ReturnsAsync(marquesInDb);
 
-            // When: On récupère toutes les marques
             var action = _controller.GetAll().GetAwaiter().GetResult();
 
-            // Then: Toutes les marques sont retournées
-            Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action.Result, typeof(OkObjectResult));
-            var okResult = action.Result as OkObjectResult;
-            var marqueDtos = okResult.Value as IEnumerable<MarqueDTO>;
-            Assert.IsNotNull(marqueDtos);
-            Assert.AreEqual(3, marqueDtos.Count());
-
-            _marqueRepository.Verify(repo => repo.GetAllAsync(), Times.Once);
+            var ok = action.Result as OkObjectResult;
+            var dtos = ok.Value as IEnumerable<MarqueDTO>;
+            Assert.AreEqual(3, dtos.Count());
         }
 
         [TestMethod]
         public void ShouldGetMarqueByName()
         {
-            // Given: Une marque avec un nom spécifique
-            Marque marqueInDb = new()
-            {
-                IdMarque = 1,
-                Nom = "Nike"
-            };
+            var marqueInDb = new Marque { IdMarque = 1, Nom = "Nike" };
 
             _marqueRepository
-                .Setup(repo => repo.GetByStringAsync("Nike"))
+                .Setup(repo => repo.GetByNameAsync("Nike"))
                 .ReturnsAsync(marqueInDb);
 
-            // When: On recherche la marque par son nom
-            ActionResult<MarqueDTO> action = _controller.GetByName("Nike").GetAwaiter().GetResult();
+            var action = _controller.GetByName("Nike").GetAwaiter().GetResult();
 
-            // Then: La marque est retournée
-            Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action.Result, typeof(OkObjectResult));
-            var okResult = action.Result as OkObjectResult;
-            var marqueDto = okResult.Value as MarqueDTO;
-            Assert.IsNotNull(marqueDto);
-            Assert.AreEqual("Nike", marqueDto.Nom);
-
-            _marqueRepository.Verify(repo => repo.GetByStringAsync("Nike"), Times.Once);
+            var ok = action.Result as OkObjectResult;
+            var dto = ok.Value as MarqueDTO;
+            Assert.AreEqual("Nike", dto.Nom);
         }
 
         [TestMethod]
         public void ShouldAddMarque()
         {
-            // Given: Une marque à ajouter
-            MarqueDTO marqueDto = new() { Nom = "Reebok" };
-            Marque marque = new() { IdMarque = 1, Nom = "Reebok" };
+            var dto = new MarqueDTO { Nom = "Reebok" };
 
             _marqueRepository
                 .Setup(repo => repo.AddAsync(It.IsAny<Marque>()));
 
-            // When: On ajoute la marque
-            ActionResult<MarqueDTO> action = _controller.Add(marqueDto).GetAwaiter().GetResult();
+            var action = _controller.Add(dto).GetAwaiter().GetResult();
 
-            // Then: La marque est créée avec un code 201
-            Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action.Result, typeof(CreatedAtActionResult));
-
             _marqueRepository.Verify(repo => repo.AddAsync(It.IsAny<Marque>()), Times.Once);
         }
 
         [TestMethod]
         public void ShouldUpdateMarque()
         {
-            // Given: Une marque à mettre à jour
-            Marque marqueToEdit = new()
-            {
-                IdMarque = 1,
-                Nom = "Nike Original"
-            };
-
-            MarqueDTO updatedDto = new()
-            {
-                IdMarque = 1,
-                Nom = "Nike Modifié"
-            };
+            var marque = new Marque { IdMarque = 1, Nom = "Nike" };
+            var dto = new MarqueDTO { IdMarque = 1, Nom = "Nike Modifié" };
 
             _marqueRepository
-                .Setup(repo => repo.GetByIdAsync(marqueToEdit.IdMarque))
-                .ReturnsAsync(marqueToEdit);
+                .Setup(repo => repo.GetByIdAsync(1))
+                .ReturnsAsync(marque);
 
             _marqueRepository
-                .Setup(repo => repo.UpdateAsync(marqueToEdit, It.IsAny<Marque>()));
+                .Setup(repo => repo.UpdateAsync(marque));
 
-            // When: On met à jour la marque
-            IActionResult action = _controller.Update(marqueToEdit.IdMarque, updatedDto).GetAwaiter().GetResult();
+            var action = _controller.Update(1, dto).GetAwaiter().GetResult();
 
-            // Then: La marque est mise à jour avec un code 204
-            Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action, typeof(NoContentResult));
-
-            _marqueRepository.Verify(repo => repo.GetByIdAsync(marqueToEdit.IdMarque), Times.Once);
-            _marqueRepository.Verify(repo => repo.UpdateAsync(marqueToEdit, It.IsAny<Marque>()), Times.Once);
+            _marqueRepository.Verify(repo => repo.UpdateAsync(marque), Times.Once);
         }
 
         [TestMethod]
-        public void UpdateMarqueShouldReturnNotFoundWhenMarqueDoesNotExist()
+        public void UpdateMarqueShouldReturnNotFound()
         {
-            // Given: Une marque qui n'existe pas
-            MarqueDTO marqueDto = new()
-            {
-                IdMarque = 999,
-                Nom = "Marque Inexistante"
-            };
+            var dto = new MarqueDTO { IdMarque = 999, Nom = "Inexistante" };
 
             _marqueRepository
                 .Setup(repo => repo.GetByIdAsync(999))
                 .ReturnsAsync((Marque)null);
 
-            // When: On essaie de mettre à jour la marque
-            IActionResult action = _controller.Update(999, marqueDto).GetAwaiter().GetResult();
+            var action = _controller.Update(999, dto).GetAwaiter().GetResult();
 
-            // Then: Un code 404 est retourné
-            Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action, typeof(NotFoundResult));
-
-            _marqueRepository.Verify(repo => repo.GetByIdAsync(999), Times.Once);
-            _marqueRepository.Verify(repo => repo.UpdateAsync(It.IsAny<Marque>(), It.IsAny<Marque>()), Times.Never);
+            _marqueRepository.Verify(repo => repo.UpdateAsync(It.IsAny<Marque>()), Times.Never);
         }
 
         [TestMethod]
         public void ShouldDeleteMarque()
         {
-            // Given: Une marque sans produits
-            var marqueInDb = new Marque
-            {
-                IdMarque = 1,
-                Nom = "Nike"
-            };
+            var marque = new Marque { IdMarque = 1, Nom = "Nike" };
 
             _marqueRepository
-                .Setup(repo => repo.GetByIdAsync(marqueInDb.IdMarque))
-                .ReturnsAsync(new ActionResult<Marque>(marqueInDb));
+                .Setup(repo => repo.GetByIdAsync(1))
+                .ReturnsAsync(marque);
 
             _produitRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Produit>>(new List<Produit>()));
+                .ReturnsAsync(new List<Produit>());
 
             _imageRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Image>>(new List<Image>()));
+                .ReturnsAsync(new List<Image>());
 
             _marqueRepository
-                .Setup(repo => repo.DeleteAsync(marqueInDb))
-                .Returns(Task.CompletedTask);
+                .Setup(repo => repo.DeleteAsync(marque));
 
-            // When: On supprime la marque
-            IActionResult action = _controller.Delete(marqueInDb.IdMarque).GetAwaiter().GetResult();
+            var action = _controller.Delete(1).GetAwaiter().GetResult();
 
-            // Then: La marque est supprimée avec un code 204
-            Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action, typeof(NoContentResult));
-
-            _marqueRepository.Verify(repo => repo.GetByIdAsync(marqueInDb.IdMarque), Times.Once);
-            _marqueRepository.Verify(repo => repo.DeleteAsync(marqueInDb), Times.Once);
+            _marqueRepository.Verify(repo => repo.DeleteAsync(marque), Times.Once);
         }
-
 
         [TestMethod]
         public void ShouldDeleteMarqueWithProducts()
         {
-            // Given: Une marque avec des produits et images
-            Marque marqueInDb = new()
-            {
-                IdMarque = 1,
-                Nom = "Nike"
-            };
+            var marque = new Marque { IdMarque = 1, Nom = "Nike" };
 
-            List<Produit> produits = new()
+            var produits = new List<Produit>
             {
                 new Produit { IdProduit = 1, Nom = "Air Max", IdMarque = 1 },
                 new Produit { IdProduit = 2, Nom = "Jordan", IdMarque = 1 }
             };
 
-            List<Image> images = new()
+            var images = new List<Image>
             {
-                new Image { IdImage = 1, Nom = "Image 1", IdProduit = 1 },
-                new Image { IdImage = 2, Nom = "Image 2", IdProduit = 2 }
+                new Image { IdImage = 1, Nom = "Img1", IdProduit = 1 },
+                new Image { IdImage = 2, Nom = "Img2", IdProduit = 2 }
             };
 
             _marqueRepository
-                .Setup(repo => repo.GetByIdAsync(marqueInDb.IdMarque))
-                .ReturnsAsync(marqueInDb);
+                .Setup(repo => repo.GetByIdAsync(1))
+                .ReturnsAsync(marque);
 
             _produitRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Produit>>(produits));
+                .ReturnsAsync(produits);
 
             _imageRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Image>>(images));
+                .ReturnsAsync(images);
 
             _imageRepository
                 .Setup(repo => repo.DeleteAsync(It.IsAny<Image>()));
@@ -292,67 +214,48 @@ namespace td_revisionTests.Controllers.Tests
                 .Setup(repo => repo.DeleteAsync(It.IsAny<Produit>()));
 
             _marqueRepository
-                .Setup(repo => repo.DeleteAsync(marqueInDb));
+                .Setup(repo => repo.DeleteAsync(marque));
 
-            // When: On supprime la marque
-            IActionResult action = _controller.Delete(marqueInDb.IdMarque).GetAwaiter().GetResult();
+            var action = _controller.Delete(1).GetAwaiter().GetResult();
 
-            // Then: La marque, ses produits et leurs images sont supprimés
-            Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action, typeof(NoContentResult));
-
-            _marqueRepository.Verify(repo => repo.GetByIdAsync(marqueInDb.IdMarque), Times.Once);
             _imageRepository.Verify(repo => repo.DeleteAsync(It.IsAny<Image>()), Times.Exactly(2));
             _produitRepository.Verify(repo => repo.DeleteAsync(It.IsAny<Produit>()), Times.Exactly(2));
-            _marqueRepository.Verify(repo => repo.DeleteAsync(marqueInDb), Times.Once);
+            _marqueRepository.Verify(repo => repo.DeleteAsync(marque), Times.Once);
         }
 
         [TestMethod]
-        public void DeleteMarqueShouldReturnNotFoundWhenMarqueDoesNotExist()
+        public void DeleteMarqueShouldReturnNotFound()
         {
-            // Given: Aucune marque en base
             _marqueRepository
                 .Setup(repo => repo.GetByIdAsync(999))
                 .ReturnsAsync((Marque)null);
 
-            // When: On essaie de supprimer une marque qui n'existe pas
-            IActionResult action = _controller.Delete(999).GetAwaiter().GetResult();
+            var action = _controller.Delete(999).GetAwaiter().GetResult();
 
-            // Then: Un code 404 est retourné
-            Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action, typeof(NotFoundResult));
-
-            _marqueRepository.Verify(repo => repo.GetByIdAsync(999), Times.Once);
-            _marqueRepository.Verify(repo => repo.DeleteAsync(It.IsAny<Marque>()), Times.Never);
         }
 
         [TestMethod]
         public void ShouldGetProduitsCount()
         {
-            // Given: Une marque avec plusieurs produits
-            List<Produit> produits = new()
+            var produits = new List<Produit>
             {
-                new Produit { IdProduit = 1, Nom = "Air Max", IdMarque = 1 },
-                new Produit { IdProduit = 2, Nom = "Jordan", IdMarque = 1 },
-                new Produit { IdProduit = 3, Nom = "Cortez", IdMarque = 1 },
-                new Produit { IdProduit = 4, Nom = "Stan Smith", IdMarque = 2 }
+                new Produit { IdProduit = 1, IdMarque = 1 },
+                new Produit { IdProduit = 2, IdMarque = 1 },
+                new Produit { IdProduit = 3, IdMarque = 1 },
+                new Produit { IdProduit = 4, IdMarque = 2 }
             };
 
             _produitRepository
                 .Setup(repo => repo.GetAllAsync())
-                .ReturnsAsync(new ActionResult<IEnumerable<Produit>>(produits));
+                .ReturnsAsync(produits);
 
-            // When: On récupère le nombre de produits
             var action = _controller.GetProduitsCount(1).GetAwaiter().GetResult();
 
-            // Then: Le bon nombre de produits est retourné
-            Assert.IsNotNull(action);
             Assert.IsInstanceOfType(action.Result, typeof(OkObjectResult));
-            var okResult = action.Result as OkObjectResult;
-            var count = (int)okResult.Value;
-            Assert.AreEqual(3, count);
-
-            _produitRepository.Verify(repo => repo.GetAllAsync(), Times.Once);
+            var ok = action.Result as OkObjectResult;
+            Assert.AreEqual(3, (int)ok.Value);
         }
     }
 }

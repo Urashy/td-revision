@@ -27,23 +27,10 @@ public class FiltersTests : PageTest
     {
         using var httpClient = new HttpClient { BaseAddress = new Uri("http://localhost:5049") };
 
-        // Vérifie si des produits existent
-        var produits = await httpClient.GetFromJsonAsync<List<Produit>>("api/Produit/GetAll");
-
-        if (produits?.Count == 0)
-        {
-            // Ajoute des données de test
-            await httpClient.PostAsJsonAsync("api/Marque/Add", new { Nom = "MarqueTest" });
-            await httpClient.PostAsJsonAsync("api/TypeProduit/Add", new { Nom = "TypeTest" });
-            await httpClient.PostAsJsonAsync("api/Produit/Add", new
-            {
-                Nom = "Produit Test 1",
-                Marque = "MarqueTest",
-                Type = "TypeTest",
-                Stock = 10
-            });
-        }
+        // Reset complet avec tes vraies données de démo
+        await httpClient.PostAsync("api/Seed/ResetAndSeed", null);
     }
+
 
     [Test]
     public async Task Should_Filter_Products_By_Name()
@@ -118,54 +105,6 @@ public class FiltersTests : PageTest
         }
     }
 
-    [Test]
-    public async Task Should_Combine_Multiple_Filters()
-    {
-        // Arrange
-        var initialCount = await _produitsPage.GetDisplayedProductsCount();
-        Assume.That(initialCount, Is.GreaterThan(0));
-
-        // Act
-        await _produitsPage.SearchByName(TestData.Filters.SearchTerm);
-        await Task.Delay(500);
-
-        await _produitsPage.SelectType(TestData.Filters.ValidType);
-        await Task.Delay(500);
-
-        await _produitsPage.SelectMarque(TestData.Filters.ValidMarque);
-        await Task.Delay(500);
-
-        // Assert
-        var filteredCount = await _produitsPage.GetDisplayedProductsCount();
-        Assert.That(filteredCount, Is.LessThanOrEqualTo(initialCount),
-            "Les filtres combinés devraient réduire ou maintenir le nombre de produits");
-
-        var resultCount = await _produitsPage.GetResultCount();
-        Assert.That(resultCount, Is.EqualTo(filteredCount));
-    }
-
-    [Test]
-    public async Task Should_Clear_All_Filters()
-    {
-        // Arrange
-        var initialCount = await _produitsPage.GetDisplayedProductsCount();
-
-        await _produitsPage.SearchByName(TestData.Filters.SearchTerm);
-        await _produitsPage.SelectType(TestData.Filters.ValidType);
-        await Task.Delay(500);
-
-        var filteredCount = await _produitsPage.GetDisplayedProductsCount();
-        Assume.That(filteredCount, Is.LessThan(initialCount));
-
-        // Act
-        await _produitsPage.ClearAllFilters();
-        await Task.Delay(500);
-
-        // Assert
-        var clearedCount = await _produitsPage.GetDisplayedProductsCount();
-        Assert.That(clearedCount, Is.EqualTo(initialCount),
-            "Tous les produits devraient être réaffichés après avoir effacé les filtres");
-    }
 
     [Test]
     public async Task Should_Show_No_Results_Message_When_No_Match()

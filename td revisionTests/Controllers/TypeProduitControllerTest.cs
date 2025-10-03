@@ -17,8 +17,8 @@ namespace td_revisionTests.Controllers.Tests
         private ProduitsbdContext _context;
         private TypeProduitController _controller;
         private IMapper _mapper;
-        private IDataRepository<Produit> _produitRepository;
-        private IDataRepository<Image> _imageRepository;
+        private INamedRepository<Produit> _produitRepository;
+        private IRepository<Image> _imageRepository;
 
         [TestInitialize]
         public void Setup()

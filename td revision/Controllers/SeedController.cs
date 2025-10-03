@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using td_revision.Models;
 using td_revision.Models.Repository;
-using td_revision.DTO.Produit;
 
 namespace td_revision.Controllers
 {
@@ -9,16 +8,16 @@ namespace td_revision.Controllers
     [ApiController]
     public class SeedController : ControllerBase
     {
-        private readonly IDataRepository<Produit> _produitRepository;
-        private readonly IDataRepository<Marque> _marqueRepository;
-        private readonly IDataRepository<TypeProduit> _typeProduitRepository;
-        private readonly IDataRepository<Image> _imageRepository;
+        private readonly INamedRepository<Produit> _produitRepository;
+        private readonly INamedRepository<Marque> _marqueRepository;
+        private readonly INamedRepository<TypeProduit> _typeProduitRepository;
+        private readonly IRepository<Image> _imageRepository;
 
         public SeedController(
-            IDataRepository<Produit> produitRepository,
-            IDataRepository<Marque> marqueRepository,
-            IDataRepository<TypeProduit> typeProduitRepository,
-            IDataRepository<Image> imageRepository)
+            INamedRepository<Produit> produitRepository,
+            INamedRepository<Marque> marqueRepository,
+            INamedRepository<TypeProduit> typeProduitRepository,
+            IRepository<Image> imageRepository)
         {
             _produitRepository = produitRepository;
             _marqueRepository = marqueRepository;
@@ -30,348 +29,133 @@ namespace td_revision.Controllers
         [ActionName("InitializeDemo")]
         public async Task<ActionResult> InitializeDemo()
         {
-            try
-            {
-                // Vérifier si des données existent déjà
-                var existingProducts = await _produitRepository.GetAllAsync();
-                if (existingProducts.Value != null && existingProducts.Value.Any())
-                {
-                    return BadRequest("La base de données contient déjà des produits. Utilisez ResetAndSeed pour tout réinitialiser.");
-                }
+            var existingProducts = await _produitRepository.GetAllAsync();
+            if (existingProducts != null && existingProducts.Any())
+                return BadRequest("La base contient déjà des produits. Utilisez ResetAndSeed pour réinitialiser.");
 
-                await SeedData();
-                return Ok(new { message = "Données de démonstration créées avec succès", count = 15 });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Erreur lors de l'initialisation : {ex.Message}");
-            }
+            await SeedData();
+            return Ok(new { message = "Données de démonstration créées" });
         }
 
         [HttpPost]
         [ActionName("ResetAndSeed")]
         public async Task<ActionResult> ResetAndSeed()
         {
-            try
-            {
-                // Supprimer toutes les données existantes
-                await DeleteAllData();
-
-                // Créer les nouvelles données
-                await SeedData();
-
-                return Ok(new { message = "Base de données réinitialisée et données de démonstration créées", count = 15 });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Erreur lors de la réinitialisation : {ex.Message}");
-            }
+            await DeleteAllData();
+            await SeedData();
+            return Ok(new { message = "Base réinitialisée + données créées" });
         }
 
         private async Task DeleteAllData()
         {
-            // Supprimer dans l'ordre inverse des dépendances
-            var allImages = await _imageRepository.GetAllAsync();
-            if (allImages.Value != null)
-            {
-                foreach (var image in allImages.Value)
-                {
-                    await _imageRepository.DeleteAsync(image);
-                }
-            }
+            foreach (var img in await _imageRepository.GetAllAsync() ?? [])
+                await _imageRepository.DeleteAsync(img);
 
-            var allProduits = await _produitRepository.GetAllAsync();
-            if (allProduits.Value != null)
-            {
-                foreach (var produit in allProduits.Value)
-                {
-                    await _produitRepository.DeleteAsync(produit);
-                }
-            }
+            foreach (var p in await _produitRepository.GetAllAsync() ?? [])
+                await _produitRepository.DeleteAsync(p);
 
-            var allMarques = await _marqueRepository.GetAllAsync();
-            if (allMarques.Value != null)
-            {
-                foreach (var marque in allMarques.Value)
-                {
-                    await _marqueRepository.DeleteAsync(marque);
-                }
-            }
+            foreach (var m in await _marqueRepository.GetAllAsync() ?? [])
+                await _marqueRepository.DeleteAsync(m);
 
-            var allTypes = await _typeProduitRepository.GetAllAsync();
-            if (allTypes.Value != null)
-            {
-                foreach (var type in allTypes.Value)
-                {
-                    await _typeProduitRepository.DeleteAsync(type);
-                }
-            }
+            foreach (var t in await _typeProduitRepository.GetAllAsync() ?? [])
+                await _typeProduitRepository.DeleteAsync(t);
         }
 
         private async Task SeedData()
         {
-            // 1. Créer les marques
+            // Marques
             var marques = new[]
             {
-                new Marque { Nom = "Apple" },
-                new Marque { Nom = "Samsung" },
-                new Marque { Nom = "Sony" },
-                new Marque { Nom = "Dell" },
-                new Marque { Nom = "HP" }
-            };
+        "Apple", "Samsung", "Sony", "Dell", "HP", "MarqueTest" // E2E
+    }.Select(n => new Marque { Nom = n }).ToList();
+            foreach (var m in marques) await _marqueRepository.AddAsync(m);
 
-            foreach (var marque in marques)
-            {
-                await _marqueRepository.AddAsync(marque);
-            }
-
-            // 2. Créer les types
+            // Types
             var types = new[]
             {
-                new TypeProduit { Nom = "Smartphone" },
-                new TypeProduit { Nom = "Ordinateur portable" },
-                new TypeProduit { Nom = "Tablette" },
-                new TypeProduit { Nom = "Écouteurs" },
-                new TypeProduit { Nom = "Télévision" }
-            };
+        "Smartphone", "Ordinateur portable", "Tablette", "Écouteurs", "Télévision", "TypeTest" // E2E
+    }.Select(n => new TypeProduit { Nom = n }).ToList();
+            foreach (var t in types) await _typeProduitRepository.AddAsync(t);
 
-            foreach (var type in types)
-            {
-                await _typeProduitRepository.AddAsync(type);
-            }
+            // Recharger depuis DB (pour les IDs)
+            var marquesDb = await _marqueRepository.GetAllAsync();
+            var typesDb = await _typeProduitRepository.GetAllAsync();
 
-            // Récupérer les IDs créés
-            var marquesCreated = await _marqueRepository.GetAllAsync();
-            var typesCreated = await _typeProduitRepository.GetAllAsync();
-
-            // 3. Créer les produits
+            // Produits démo
             var produits = new[]
             {
-                // Apple
-                new Produit
-                {
-                    Nom = "iPhone 15 Pro",
-                    Description = "Smartphone haut de gamme avec processeur A17 Pro",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "Apple").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Smartphone").IdTypeProduit,
-                    Stock = 25,
-                    StockMini = 10,
-                    StockMaxi = 50
-                },
-                new Produit
-                {
-                    Nom = "MacBook Pro 16\"",
-                    Description = "Ordinateur portable professionnel avec puce M3 Max",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "Apple").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Ordinateur portable").IdTypeProduit,
-                    Stock = 12,
-                    StockMini = 8,
-                    StockMaxi = 30
-                },
-                new Produit
-                {
-                    Nom = "iPad Air",
-                    Description = "Tablette légère et performante pour le travail et les loisirs",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "Apple").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Tablette").IdTypeProduit,
-                    Stock = 5,
-                    StockMini = 15,
-                    StockMaxi = 40
-                },
-                new Produit
-                {
-                    Nom = "AirPods Pro",
-                    Description = "Écouteurs sans fil avec réduction de bruit active",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "Apple").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Écouteurs").IdTypeProduit,
-                    Stock = 45,
-                    StockMini = 20,
-                    StockMaxi = 60
-                },
-                
-                // Samsung
-                new Produit
-                {
-                    Nom = "Galaxy S24 Ultra",
-                    Description = "Smartphone premium avec stylet S Pen intégré",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "Samsung").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Smartphone").IdTypeProduit,
-                    Stock = 18,
-                    StockMini = 12,
-                    StockMaxi = 45
-                },
-                new Produit
-                {
-                    Nom = "Galaxy Book4 Pro",
-                    Description = "Ordinateur portable ultra-fin et léger",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "Samsung").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Ordinateur portable").IdTypeProduit,
-                    Stock = 8,
-                    StockMini = 10,
-                    StockMaxi = 25
-                },
-                new Produit
-                {
-                    Nom = "Galaxy Tab S9",
-                    Description = "Tablette Android haut de gamme avec écran AMOLED",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "Samsung").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Tablette").IdTypeProduit,
-                    Stock = 22,
-                    StockMini = 15,
-                    StockMaxi = 35
-                },
-                new Produit
-                {
-                    Nom = "Neo QLED 65\"",
-                    Description = "Télévision 4K avec technologie Quantum HDR",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "Samsung").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Télévision").IdTypeProduit,
-                    Stock = 7,
-                    StockMini = 5,
-                    StockMaxi = 15
-                },
-                
-                // Sony
-                new Produit
-                {
-                    Nom = "Xperia 1 VI",
-                    Description = "Smartphone pour les créateurs avec écran 4K",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "Sony").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Smartphone").IdTypeProduit,
-                    Stock = 3,
-                    StockMini = 8,
-                    StockMaxi = 20
-                },
-                new Produit
-                {
-                    Nom = "WH-1000XM5",
-                    Description = "Casque audio avec meilleure réduction de bruit du marché",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "Sony").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Écouteurs").IdTypeProduit,
-                    Stock = 32,
-                    StockMini = 15,
-                    StockMaxi = 50
-                },
-                new Produit
-                {
-                    Nom = "Bravia XR 55\"",
-                    Description = "Télévision OLED avec processeur cognitif XR",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "Sony").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Télévision").IdTypeProduit,
-                    Stock = 10,
-                    StockMini = 6,
-                    StockMaxi = 18
-                },
-                
-                // Dell
-                new Produit
-                {
-                    Nom = "XPS 15",
-                    Description = "Ordinateur portable pour créatifs avec écran InfinityEdge",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "Dell").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Ordinateur portable").IdTypeProduit,
-                    Stock = 14,
-                    StockMini = 10,
-                    StockMaxi = 28
-                },
-                
-                // HP
-                new Produit
-                {
-                    Nom = "Spectre x360",
-                    Description = "PC convertible 2-en-1 haut de gamme",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "HP").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Ordinateur portable").IdTypeProduit,
-                    Stock = 16,
-                    StockMini = 12,
-                    StockMaxi = 32
-                },
-                new Produit
-                {
-                    Nom = "Elite x2",
-                    Description = "Tablette professionnelle détachable avec Windows",
-                    IdMarque = marquesCreated.Value?.First(m => m.Nom == "HP").IdMarque,
-                    IdTypeProduit = typesCreated.Value?.First(t => t.Nom == "Tablette").IdTypeProduit,
-                    Stock = 11,
-                    StockMini = 10,
-                    StockMaxi = 25
-                }
-            };
+        new Produit { Nom="iPhone 15 Pro", Description="Smartphone haut de gamme",
+            IdMarque=marquesDb.First(m=>m.Nom=="Apple").IdMarque,
+            IdTypeProduit=typesDb.First(t=>t.Nom=="Smartphone").IdTypeProduit,
+            Stock=25, StockMini=10, StockMaxi=50 },
 
-            foreach (var produit in produits)
+        new Produit { Nom="iPad Air", Description="Tablette performante",
+            IdMarque=marquesDb.First(m=>m.Nom=="Apple").IdMarque,
+            IdTypeProduit=typesDb.First(t=>t.Nom=="Tablette").IdTypeProduit,
+            Stock=5, StockMini=15, StockMaxi=40 }, // 🔹 en réappro
+
+        new Produit { Nom="Galaxy S24 Ultra", Description="Smartphone premium",
+            IdMarque=marquesDb.First(m=>m.Nom=="Samsung").IdMarque,
+            IdTypeProduit=typesDb.First(t=>t.Nom=="Smartphone").IdTypeProduit,
+            Stock=18, StockMini=12, StockMaxi=45 },
+
+        new Produit { Nom="XPS 15", Description="Ordinateur portable Dell",
+            IdMarque=marquesDb.First(m=>m.Nom=="Dell").IdMarque,
+            IdTypeProduit=typesDb.First(t=>t.Nom=="Ordinateur portable").IdTypeProduit,
+            Stock=14, StockMini=10, StockMaxi=28 },
+
+        // 🔹 Nouveau produit supplémentaire pour atteindre 7
+        new Produit { Nom="Bravia OLED", Description="Télévision Sony",
+            IdMarque=marquesDb.First(m=>m.Nom=="Sony").IdMarque,
+            IdTypeProduit=typesDb.First(t=>t.Nom=="Télévision").IdTypeProduit,
+            Stock=8, StockMini=3, StockMaxi=15 }
+    };
+            foreach (var p in produits) await _produitRepository.AddAsync(p);
+
+            // Produits spéciaux E2E
+            var marqueTest = marquesDb.First(m => m.Nom == "MarqueTest");
+            var typeTest = typesDb.First(t => t.Nom == "TypeTest");
+
+            await _produitRepository.AddAsync(new Produit
             {
-                await _produitRepository.AddAsync(produit);
-            }
+                Nom = "Produit test 1",
+                Description = "Produit utilisé pour les tests",
+                IdMarque = marqueTest.IdMarque,
+                IdTypeProduit = typeTest.IdTypeProduit,
+                Stock = 5,
+                StockMini = 3,
+                StockMaxi = 10
+            });
 
-            // 4. Ajouter quelques images pour certains produits
-            var produitsCreated = await _produitRepository.GetAllAsync();
-
-            var images = new[]
+            await _produitRepository.AddAsync(new Produit
             {
-                new Image
-                {
-                    Nom = "iPhone 15 Pro - Avant",
-                    Url = "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=300",
-                    IdProduit = produitsCreated.Value?.First(p => p.Nom == "iPhone 15 Pro").IdProduit ?? 0
-                },
-                new Image
-                {
-                    Nom = "MacBook Pro - Vue principale",
-                    Url = "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300",
-                    IdProduit = produitsCreated.Value?.First(p => p.Nom == "MacBook Pro 16\"").IdProduit ?? 0
-                },
-                new Image
-                {
-                    Nom = "Galaxy S24 - Design",
-                    Url = "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=300",
-                    IdProduit = produitsCreated.Value?.First(p => p.Nom == "Galaxy S24 Ultra").IdProduit ?? 0
-                },new Image
-                {
-                    Nom = "Galaxy Book4 Pro",
-                    Url = "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcQ67a8SAzLpqKHqJYhwBaShGJKTHLS12xVxE0w2skwKVjkhQPB-O1uMcqPRXgpnxMN4stIH6kGB-rIjLOSraQ9nuDGBMLbKnS7d0gSuey3hDDoCUQqqK7C8K4SEgtiFwKdK5NEQTnYvDyM&usqp=CAc",
-                    IdProduit = produitsCreated.Value?.First(p => p.Nom == "Galaxy Book4 Pro").IdProduit ?? 0
-                },new Image
-                {
-                    Nom = "iPad Air",
-                    Url = "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRwp5zYrry6NTaWUnLoQSoqppXdJXRJu_ogu0xFBfoc98_r5vmqt1p4asaAmFFKjM6gLqSz79CssEDlrA1gLSDEJDVTd2WsiJ0dUYtL62WQ3J_V7ZeCpDEvI8b5UuAk&usqp=CAc",
-                    IdProduit = produitsCreated.Value?.First(p => p.Nom == "iPad Air").IdProduit ?? 0
-                }
-
-
-            };
-
-            foreach (var image in images)
-            {
-                if (image.IdProduit > 0)
-                {
-                    await _imageRepository.AddAsync(image);
-                }
-            }
+                Nom = "Nouveau Produit test E2E",
+                Description = "Deuxième produit de test",
+                IdMarque = marqueTest.IdMarque,
+                IdTypeProduit = typeTest.IdTypeProduit,
+                Stock = 12,
+                StockMini = 5,
+                StockMaxi = 20
+            });
         }
+
 
         [HttpGet]
         [ActionName("GetStats")]
         public async Task<ActionResult> GetStats()
         {
-            try
-            {
-                var produits = await _produitRepository.GetAllAsync();
-                var marques = await _marqueRepository.GetAllAsync();
-                var types = await _typeProduitRepository.GetAllAsync();
-                var images = await _imageRepository.GetAllAsync();
+            var produits = await _produitRepository.GetAllAsync();
+            var marques = await _marqueRepository.GetAllAsync();
+            var types = await _typeProduitRepository.GetAllAsync();
+            var images = await _imageRepository.GetAllAsync();
 
-                return Ok(new
-                {
-                    produits = produits.Value?.Count() ?? 0,
-                    marques = marques.Value?.Count() ?? 0,
-                    types = types.Value?.Count() ?? 0,
-                    images = images.Value?.Count() ?? 0
-                });
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                return StatusCode(500, $"Erreur : {ex.Message}");
-            }
+                produits = produits?.Count() ?? 0,
+                marques = marques?.Count() ?? 0,
+                types = types?.Count() ?? 0,
+                images = images?.Count() ?? 0
+            });
         }
     }
 }

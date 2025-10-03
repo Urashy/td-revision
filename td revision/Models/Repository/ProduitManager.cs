@@ -6,15 +6,13 @@ using td_revision.DTO;
 
 namespace td_revision.Models.Repository
 {
-    public class ProduitManager : ManagerGenerique<Produit>
+    public class ProduitManager : NamedManagerGenerique<Produit>
     {
-        private readonly ProduitsbdContext _context;
         public ProduitManager(ProduitsbdContext context) : base(context)
         {
-            _context = context;
         }
 
-        public override async Task<ActionResult<IEnumerable<Produit>>> GetAllAsync()
+        public override async Task<IEnumerable<Produit>> GetAllAsync()
         {
             return await dbSet
                 .Include(p => p.MarqueProduitNavigation)
@@ -22,7 +20,7 @@ namespace td_revision.Models.Repository
                 .ToListAsync();
         }
 
-        public override async Task<ActionResult<Produit?>> GetByIdAsync(int id)
+        public override async Task<Produit?> GetByIdAsync(int id)
         {
             return await dbSet
                 .Include(p => p.MarqueProduitNavigation)
@@ -30,9 +28,12 @@ namespace td_revision.Models.Repository
                 .FirstOrDefaultAsync(p => p.IdProduit == id);
         }
 
-        public override async Task<ActionResult<Produit?>> GetByStringAsync(string str)
+        public override async Task<Produit?> GetByNameAsync(string name)
         {
-            return await dbSet.FirstOrDefaultAsync(p => p.Nom == str);
+            return await dbSet
+                .Include(p => p.MarqueProduitNavigation)
+                .Include(p => p.TypeProduitNavigation)
+                .FirstOrDefaultAsync(p => p.Nom == name);
         }
     }
 }

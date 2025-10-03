@@ -52,14 +52,14 @@ public class DatabaseFixture : IDisposable
             }
 
             // Créer les données de base
-            await _httpClient.PostAsJsonAsync("api/Marque/Add", new { Nom = TestData.Products.ExistingProductMarque });
-            await _httpClient.PostAsJsonAsync("api/TypeProduit/Add", new { Nom = TestData.Products.ExistingProductType });
+            await _httpClient.PostAsJsonAsync("api/Marque/Add", new { Nom = TestData.Products.ExistingProductMarque1 });
+            await _httpClient.PostAsJsonAsync("api/TypeProduit/Add", new { Nom = TestData.Products.ExistingProductType1 });
             
             await _httpClient.PostAsJsonAsync("api/Produit/Add", new
             {
-                Nom = TestData.Products.ExistingProductName,
-                Marque = TestData.Products.ExistingProductMarque,
-                Type = TestData.Products.ExistingProductType,
+                Nom = TestData.Products.ExistingProductName1,
+                Marque = TestData.Products.ExistingProductMarque1,
+                Type = TestData.Products.ExistingProductType1,
                 Stock = 10,
                 StockMini = 5,
                 StockMaxi = 50

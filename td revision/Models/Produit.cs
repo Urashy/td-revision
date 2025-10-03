@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using td_revision.Models.Repository;
 
 namespace td_revision.Models
 {
     [Table("t_e_produit_prd")]
-    public class Produit : IEntity
+    public class Produit : IEntity, INamedEntity
     {
         [Key]
         [Column("idproduit")]

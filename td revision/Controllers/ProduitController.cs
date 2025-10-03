@@ -11,17 +11,17 @@ namespace td_revision.Controllers
     public class ProduitController : ControllerBase
     {
         private readonly IMapper _mapper;
-        private readonly IDataRepository<Produit> _dataRepository;
-        private readonly IDataRepository<Marque> _marqueRepository;
-        private readonly IDataRepository<TypeProduit> _typeProduitRepository;
-        private readonly IDataRepository<Image> _imageRepository;
+        private readonly INamedRepository<Produit> _dataRepository;
+        private readonly INamedRepository<Marque> _marqueRepository;
+        private readonly INamedRepository<TypeProduit> _typeProduitRepository;
+        private readonly IRepository<Image> _imageRepository;
 
         public ProduitController(
             IMapper mapper,
-            IDataRepository<Produit> dataRepository,
-            IDataRepository<Marque> marqueRepository,
-            IDataRepository<TypeProduit> typeProduitRepository,
-            IDataRepository<Image> imageRepository)
+            INamedRepository<Produit> dataRepository,
+            INamedRepository<Marque> marqueRepository,
+            INamedRepository<TypeProduit> typeProduitRepository,
+            IRepository<Image> imageRepository)
         {
             _mapper = mapper;
             _dataRepository = dataRepository;
@@ -36,11 +36,11 @@ namespace td_revision.Controllers
         public async Task<ActionResult<IEnumerable<ProduitDTO>>> GetAll()
         {
             var entities = await _dataRepository.GetAllAsync();
-            if (entities.Value == null)
+            if (entities == null)
             {
                 return NotFound();
             }
-            var dtos = _mapper.Map<IEnumerable<ProduitDTO>>(entities.Value);
+            var dtos = _mapper.Map<IEnumerable<ProduitDTO>>(entities);
             return Ok(dtos);
         }
 
@@ -50,11 +50,11 @@ namespace td_revision.Controllers
         public async Task<ActionResult<ProduitDetailDTO>> GetById(int id)
         {
             var entity = await _dataRepository.GetByIdAsync(id);
-            if (entity.Value == null)
+            if (entity == null)
             {
                 return NotFound();
             }
-            var dto = _mapper.Map<ProduitDetailDTO>(entity.Value);
+            var dto = _mapper.Map<ProduitDetailDTO>(entity);
             return Ok(dto);
         }
 
@@ -63,12 +63,12 @@ namespace td_revision.Controllers
         [ActionName("GetByName")]
         public async Task<ActionResult<ProduitDetailDTO>> GetByName([FromQuery] string name)
         {
-            var entity = await _dataRepository.GetByStringAsync(name);
-            if (entity.Value == null)
+            var entity = await _dataRepository.GetByNameAsync(name);
+            if (entity == null)
             {
                 return NotFound();
             }
-            var dto = _mapper.Map<ProduitDetailDTO>(entity.Value);
+            var dto = _mapper.Map<ProduitDetailDTO>(entity);
             return Ok(dto);
         }
 
@@ -90,10 +90,10 @@ namespace td_revision.Controllers
                 // 2. Résoudre l'IdMarque à partir du nom
                 if (!string.IsNullOrEmpty(dto.Marque))
                 {
-                    var marqueResult = await _marqueRepository.GetByStringAsync(dto.Marque);
-                    if (marqueResult.Value != null)
+                    var marqueResult = await _marqueRepository.GetByNameAsync(dto.Marque);
+                    if (marqueResult != null)
                     {
-                        entity.IdMarque = marqueResult.Value.IdMarque;
+                        entity.IdMarque = marqueResult.IdMarque;
                     }
                     else
                     {
@@ -104,10 +104,10 @@ namespace td_revision.Controllers
                 // 3. Résoudre l'IdTypeProduit à partir du nom
                 if (!string.IsNullOrEmpty(dto.Type))
                 {
-                    var typeResult = await _typeProduitRepository.GetByStringAsync(dto.Type);
-                    if (typeResult.Value != null)
+                    var typeResult = await _typeProduitRepository.GetByNameAsync(dto.Type);
+                    if (typeResult != null)
                     {
-                        entity.IdTypeProduit = typeResult.Value.IdTypeProduit;
+                        entity.IdTypeProduit = typeResult.IdTypeProduit;
                     }
                     else
                     {
@@ -133,7 +133,7 @@ namespace td_revision.Controllers
         public async Task<ActionResult> Update(int id, [FromBody] ProduitDetailDTO dto)
         {
             var entityToUpdate = await _dataRepository.GetByIdAsync(id);
-            if (entityToUpdate.Value == null)
+            if (entityToUpdate == null)
             {
                 return NotFound();
             }
@@ -141,24 +141,24 @@ namespace td_revision.Controllers
             // Résoudre les FK comme pour l'ajout
             if (!string.IsNullOrEmpty(dto.Marque))
             {
-                var marqueResult = await _marqueRepository.GetByStringAsync(dto.Marque);
-                if (marqueResult.Value != null)
+                var marqueResult = await _marqueRepository.GetByNameAsync(dto.Marque);
+                if (marqueResult != null)
                 {
-                    entityToUpdate.Value.IdMarque = marqueResult.Value.IdMarque;
+                    entityToUpdate.IdMarque = marqueResult.IdMarque;
                 }
             }
 
             if (!string.IsNullOrEmpty(dto.Type))
             {
-                var typeResult = await _typeProduitRepository.GetByStringAsync(dto.Type);
-                if (typeResult.Value != null)
+                var typeResult = await _typeProduitRepository.GetByNameAsync(dto.Type);
+                if (typeResult != null)
                 {
-                    entityToUpdate.Value.IdTypeProduit = typeResult.Value.IdTypeProduit;
+                    entityToUpdate.IdTypeProduit = typeResult.IdTypeProduit;
                 }
             }
 
-            _mapper.Map(dto, entityToUpdate.Value);
-            await _dataRepository.UpdateAsync(entityToUpdate.Value, entityToUpdate.Value);
+            _mapper.Map(dto, entityToUpdate);
+            await _dataRepository.UpdateAsync(entityToUpdate);
             return NoContent();
         }
 
@@ -169,16 +169,16 @@ namespace td_revision.Controllers
             try
             {
                 var entity = await _dataRepository.GetByIdAsync(id);
-                if (entity.Value == null)
+                if (entity == null)
                 {
                     return NotFound();
                 }
 
                 // 1. D'abord récupérer et supprimer toutes les images liées à ce produit
                 var allImagesResult = await _imageRepository.GetAllAsync();
-                if (allImagesResult.Value != null)
+                if (allImagesResult != null)
                 {
-                    var imagesToDelete = allImagesResult.Value.Where(img => img.IdProduit == id).ToList();
+                    var imagesToDelete = allImagesResult.Where(img => img.IdProduit == id).ToList();
                     foreach (var image in imagesToDelete)
                     {
                         await _imageRepository.DeleteAsync(image);
@@ -186,7 +186,7 @@ namespace td_revision.Controllers
                 }
 
                 // 2. Ensuite supprimer le produit
-                await _dataRepository.DeleteAsync(entity.Value);
+                await _dataRepository.DeleteAsync(entity);
                 return NoContent();
             }
             catch (Exception ex)
@@ -205,12 +205,12 @@ namespace td_revision.Controllers
             try
             {
                 var entities = await _dataRepository.GetAllAsync();
-                if (entities.Value == null)
+                if (entities == null)
                 {
                     return Ok(new List<ProduitDTO>());
                 }
 
-                var query = entities.Value.AsQueryable();
+                var query = entities.AsQueryable();
 
                 if (!string.IsNullOrWhiteSpace(searchTerm))
                 {

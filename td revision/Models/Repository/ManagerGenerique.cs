@@ -5,7 +5,8 @@ using System.Linq.Expressions;
 
 namespace td_revision.Models.Repository
 {
-    public abstract class ManagerGenerique<TEntity> : IDataRepository<TEntity> where TEntity : class
+    public abstract class ManagerGenerique<TEntity> : IRepository<TEntity>
+    where TEntity : class
     {
         protected readonly ProduitsbdContext context;
         protected readonly DbSet<TEntity> dbSet;
@@ -16,28 +17,27 @@ namespace td_revision.Models.Repository
             this.dbSet = context.Set<TEntity>();
         }
 
-        public virtual async Task<ActionResult<IEnumerable<TEntity>>> GetAllAsync()
+        public virtual async Task<IEnumerable<TEntity>> GetAllAsync()
         {
             return await dbSet.ToListAsync();
         }
 
-        public virtual async Task<ActionResult<TEntity?>> GetByIdAsync(int id)
+        public virtual async Task<TEntity?> GetByIdAsync(int id)
         {
             return await dbSet.FindAsync(id);
         }
 
-        public abstract Task<ActionResult<TEntity?>> GetByStringAsync(string str);
-
-        public virtual async Task AddAsync(TEntity entity)
+        public virtual async Task<TEntity> AddAsync(TEntity entity)
         {
             await dbSet.AddAsync(entity);
             await context.SaveChangesAsync();
+            return entity;
         }
 
-        public virtual async Task UpdateAsync(TEntity entityToUpdate, TEntity entity)
+        public virtual async Task UpdateAsync(TEntity entity)
         {
-            dbSet.Attach(entityToUpdate);
-            context.Entry(entityToUpdate).CurrentValues.SetValues(entity);
+            dbSet.Attach(entity);
+            context.Entry(entity).State = EntityState.Modified;
             await context.SaveChangesAsync();
         }
 
