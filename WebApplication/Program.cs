@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using WebApplication;
 using WebApplication.Models;
 using WebApplication.Services;
+using WebApplication.ViewModels;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -25,5 +26,9 @@ builder.Services.AddScoped<IGenericService<Produit>, ProduitService>();
 
 // Service de notification (SINGLETON pour persister les notifications dans toute l'application)
 builder.Services.AddSingleton<INotificationService, NotificationService>();
+
+
+builder.Services.AddScoped<AjouterProduitViewModel>();
+builder.Services.AddScoped<ProduitPageViewModel>();
 
 await builder.Build().RunAsync();

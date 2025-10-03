@@ -1,11 +1,6 @@
 ﻿@page "/produits"
-@inject IGenericService<Produit> WSProduit
-@inject IGenericService<Marque> WSMarque
-@inject IGenericService<TypeProduit> WSTypeProduit
-@inject IGenericService<Image> WSImage
-@inject INotificationService NotificationService
-@using WebApplication.Models
-@using WebApplication.Services
+@inject ProduitPageViewModel ViewModel
+@implements IDisposable
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="text-primary">
@@ -38,7 +33,7 @@
                 Recherche par nom :
             </label>
             <input type="text" id="searchNom" class="form-control" placeholder="Nom du produit..."
-                   @bind="searchNom" @oninput="OnSearchChanged" />
+                   @bind="ViewModel.SearchNom" @bind:event="oninput" />
         </div>
 
         <div class="col-md-4">
@@ -46,11 +41,11 @@
                 <i class="fas fa-tags me-1"></i>
                 Filtrer par type :
             </label>
-            <select id="filterType" class="form-select" @bind="SelectedType">
+            <select id="filterType" class="form-select" @bind="ViewModel.SelectedType">
                 <option value="">-- Tous les types --</option>
-                @if (typesDisponibles != null)
+                @if (ViewModel.TypesDisponibles != null)
                 {
-                    @foreach (var type in typesDisponibles)
+                    @foreach (var type in ViewModel.TypesDisponibles)
                     {
                         <option value="@type.Nom">@type.Nom</option>
                     }
@@ -63,11 +58,11 @@
                 <i class="fas fa-trademark me-1"></i>
                 Filtrer par marque :
             </label>
-            <select id="filterMarque" class="form-select" @bind="SelectedMarque">
+            <select id="filterMarque" class="form-select" @bind="ViewModel.SelectedMarque">
                 <option value="">-- Toutes les marques --</option>
-                @if (marquesDisponibles != null)
+                @if (ViewModel.MarquesDisponibles != null)
                 {
-                    @foreach (var marque in marquesDisponibles)
+                    @foreach (var marque in ViewModel.MarquesDisponibles)
                     {
                         <option value="@marque.Nom">@marque.Nom</option>
                     }
@@ -78,19 +73,19 @@
 
     <div class="row mt-3">
         <div class="col-12 d-flex justify-content-between align-items-center">
-            <button class="btn btn-outline-secondary" @onclick="ClearFilters">
+            <button class="btn btn-outline-secondary" @onclick="ViewModel.EffacerFiltresAsync">
                 <i class="fas fa-eraser me-1"></i>
                 Effacer les filtres
             </button>
             <span class="badge bg-info fs-6">
-                @produitsFiltres?.Count() résultat(s) trouvé(s)
+                @ViewModel.ProduitsFiltres?.Count() résultat(s) trouvé(s)
             </span>
         </div>
     </div>
 </div>
 
 <!-- Contenu principal -->
-@if (produits == null)
+@if (ViewModel.Produits == null)
 {
     <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
@@ -99,7 +94,7 @@
         <p class="mt-3 text-muted">Chargement des produits...</p>
     </div>
 }
-else if (!produitsFiltres.Any())
+else if (!ViewModel.ProduitsFiltres.Any())
 {
     <div class="text-center py-5">
         <i class="fas fa-search fa-4x text-muted mb-3"></i>
@@ -110,10 +105,10 @@ else
 {
     <!-- Grille de cartes -->
     <div class="row g-4">
-        @foreach (var produit in produitsFiltres)
+        @foreach (var produit in ViewModel.ProduitsFiltres)
         {
             <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
-                <div class="card h-100 shadow-sm product-card" @onclick="() => VoirDetails(produit.IdProduit)">
+                <div class="card h-100 shadow-sm product-card" @onclick="async () => await ViewModel.VoirDetailsAsync(produit.IdProduit)">
 
                     <div class="card-header bg-primary text-white position-relative">
                         <h6 class="card-title mb-0 fw-bold">@produit.Nom</h6>
@@ -129,9 +124,9 @@ else
 
                     <div class="card-body d-flex flex-column">
                         <div class="mb-3">
-                            @if (imagesProduits.ContainsKey(produit.IdProduit) && imagesProduits[produit.IdProduit].Any())
+                            @if (ViewModel.ImagesProduits.ContainsKey(produit.IdProduit) && ViewModel.ImagesProduits[produit.IdProduit].Any())
                             {
-                                var firstImage = imagesProduits[produit.IdProduit].First();
+                                var firstImage = ViewModel.ImagesProduits[produit.IdProduit].First();
                                 <img src="@firstImage.UrlPhoto" alt="@firstImage.NomImage"
                                      class="img-fluid rounded mb-2"
                                      style="height: 150px; width: 100%; object-fit: cover;"
@@ -163,15 +158,15 @@ else
                     </div>
 
                     <div class="card-footer bg-transparent d-flex justify-content-between">
-                        <button class="btn btn-outline-primary btn-sm" @onclick:stopPropagation="true" @onclick="() => VoirDetails(produit.IdProduit)">
+                        <button class="btn btn-outline-primary btn-sm" @onclick:stopPropagation="true" @onclick="async () => await ViewModel.VoirDetailsAsync(produit.IdProduit)">
                             <i class="fas fa-eye me-1"></i>
                             Détails
                         </button>
                         <div>
-                            <button class="btn btn-outline-warning btn-sm me-1" @onclick:stopPropagation="true" @onclick="() => ModifierProduit(produit.IdProduit)">
+                            <button class="btn btn-outline-warning btn-sm me-1" @onclick:stopPropagation="true" @onclick="async () => await ViewModel.OuvrirModificationAsync(produit.IdProduit)">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-outline-danger btn-sm" @onclick:stopPropagation="true" @onclick="() => SupprimerProduit(produit.IdProduit, produit.Nom)">
+                            <button class="btn btn-outline-danger btn-sm" @onclick:stopPropagation="true" @onclick="() => ViewModel.OuvrirSuppression(produit.IdProduit, produit.Nom)">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -183,9 +178,9 @@ else
 }
 
 <!-- Modal de détails -->
-@if (showDetailModal && produitSelectionne != null)
+@if (ViewModel.ShowDetailModal && ViewModel.ProduitSelectionne != null)
 {
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @onclick="FermerDetailModal">
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @onclick="ViewModel.FermerDetailModal">
         <div class="modal-dialog modal-lg" @onclick:stopPropagation="true">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
@@ -193,7 +188,7 @@ else
                         <i class="fas fa-info-circle me-2"></i>
                         Détails du produit
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="FermerDetailModal"></button>
+                    <button type="button" class="btn-close btn-close-white" @onclick="ViewModel.FermerDetailModal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
@@ -202,29 +197,29 @@ else
                             <table class="table table-borderless">
                                 <tr>
                                     <td class="fw-bold">Nom :</td>
-                                    <td>@produitSelectionne.Nom</td>
+                                    <td>@ViewModel.ProduitSelectionne.Nom</td>
                                 </tr>
                                 <tr>
                                     <td class="fw-bold">Marque :</td>
-                                    <td><span class="badge bg-info">@produitSelectionne.Marque</span></td>
+                                    <td><span class="badge bg-info">@ViewModel.ProduitSelectionne.Marque</span></td>
                                 </tr>
                                 <tr>
                                     <td class="fw-bold">Type :</td>
-                                    <td><span class="badge bg-secondary">@produitSelectionne.Type</span></td>
+                                    <td><span class="badge bg-secondary">@ViewModel.ProduitSelectionne.Type</span></td>
                                 </tr>
                                 <tr>
                                     <td class="fw-bold">Stock :</td>
                                     <td>
-                                        <span class="badge @(produitSelectionne.Stock > produitSelectionne.StockMini ? "bg-success" : "bg-danger")">
-                                            @(produitSelectionne.Stock ?? 0)
+                                        <span class="badge @(ViewModel.ProduitSelectionne.Stock > ViewModel.ProduitSelectionne.StockMini ? "bg-success" : "bg-danger")">
+                                            @(ViewModel.ProduitSelectionne.Stock ?? 0)
                                         </span>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="fw-bold">Stock minimal :</td>
                                     <td>
-                                        <span class="badge @(produitSelectionne.StockMini > produitSelectionne.StockMini ? "bg-success" : "bg-danger")">
-                                            @(produitSelectionne.StockMini ?? 0)
+                                        <span class="badge bg-info">
+                                            @(ViewModel.ProduitSelectionne.StockMini ?? 0)
                                         </span>
                                     </td>
                                 </tr>
@@ -232,33 +227,28 @@ else
                         </div>
                         <div class="col-md-6">
                             <h6 class="fw-bold text-primary">Images</h6>
-                            @if (imagesProduits.ContainsKey(produitSelectionne.IdProduit) && imagesProduits[produitSelectionne.IdProduit].Any())
+                            @if (ViewModel.ImagesProduits.ContainsKey(ViewModel.ProduitSelectionne.IdProduit) && ViewModel.ImagesProduits[ViewModel.ProduitSelectionne.IdProduit].Any())
                             {
-                                var images = imagesProduits[produitSelectionne.IdProduit];
+                                var images = ViewModel.ImagesProduits[ViewModel.ProduitSelectionne.IdProduit];
                                 @if (images.Count > 1)
                                 {
-                                    <div id="carousel-detail-@produitSelectionne.IdProduit" class="carousel slide" data-bs-ride="carousel">
+                                    <div id="carousel-detail-@ViewModel.ProduitSelectionne.IdProduit" class="carousel slide" data-bs-ride="carousel">
                                         <div class="carousel-indicators">
                                             @for (int i = 0; i < images.Count; i++)
                                             {
-                                                <button type="button" data-bs-target="#carousel-detail-@produitSelectionne.IdProduit" data-bs-slide-to="@i"
+                                                <button type="button" data-bs-target="#carousel-detail-@ViewModel.ProduitSelectionne.IdProduit" data-bs-slide-to="@i"
                                                         class="@(i == 0 ? "active" : "")" aria-current="@(i == 0 ? "true" : "false")"></button>
                                             }
                                         </div>
                                         <div class="carousel-inner rounded">
-
                                             @for (int i = 0; i < images.Count; i++)
                                             {
                                                 var image = images[i];
-
                                                 <div class="carousel-item @(i == 0 ? "active" : "")">
-                                                    <!-- Conteneur pour l'image -->
                                                     <div style="height: 250px; display: flex; justify-content: center; align-items: center;">
                                                         <img src="@image.UrlPhoto" alt="@image.NomImage"
                                                              style="max-height: 100%; max-width: 100%; object-fit: contain;" />
                                                     </div>
-
-                                                    <!-- Légende en dessous -->
                                                     <div class="text-center mt-2">
                                                         <p class="mb-0 small" style="background-color: rgba(0,0,0,0.6); color: white; display: inline-block; padding: 5px 10px; border-radius: 5px;">
                                                             @image.NomImage
@@ -266,15 +256,12 @@ else
                                                     </div>
                                                 </div>
                                             }
-
-
-
                                         </div>
-                                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel-detail-@produitSelectionne.IdProduit" data-bs-slide="prev">
+                                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel-detail-@ViewModel.ProduitSelectionne.IdProduit" data-bs-slide="prev">
                                             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                             <span class="visually-hidden">Précédent</span>
                                         </button>
-                                        <button class="carousel-control-next" type="button" data-bs-target="#carousel-detail-@produitSelectionne.IdProduit" data-bs-slide="next">
+                                        <button class="carousel-control-next" type="button" data-bs-target="#carousel-detail-@ViewModel.ProduitSelectionne.IdProduit" data-bs-slide="next">
                                             <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                             <span class="visually-hidden">Suivant</span>
                                         </button>
@@ -299,19 +286,19 @@ else
                             }
                         </div>
                     </div>
-                    @if (!string.IsNullOrEmpty(produitSelectionne.Description))
+                    @if (!string.IsNullOrEmpty(ViewModel.ProduitSelectionne.Description))
                     {
                         <hr>
                         <h6 class="fw-bold text-primary">Description</h6>
-                        <p>@produitSelectionne.Description</p>
+                        <p>@ViewModel.ProduitSelectionne.Description</p>
                     }
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" @onclick="() => ModifierProduit(produitSelectionne.IdProduit)">
+                    <button type="button" class="btn btn-warning" @onclick="async () => await ViewModel.OuvrirModificationAsync(ViewModel.ProduitSelectionne.IdProduit)">
                         <i class="fas fa-edit me-2"></i>
                         Modifier
                     </button>
-                    <button type="button" class="btn btn-secondary" @onclick="FermerDetailModal">Fermer</button>
+                    <button type="button" class="btn btn-secondary" @onclick="ViewModel.FermerDetailModal">Fermer</button>
                 </div>
             </div>
         </div>
@@ -319,9 +306,9 @@ else
 }
 
 <!-- Modal de modification -->
-@if (showEditModal && produitAModifier != null)
+@if (ViewModel.ShowEditModal && ViewModel.ProduitAModifier != null)
 {
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @onclick="FermerEditModal">
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @onclick="ViewModel.FermerEditModal">
         <div class="modal-dialog modal-xl" @onclick:stopPropagation="true">
             <div class="modal-content">
                 <div class="modal-header bg-warning text-dark">
@@ -329,18 +316,18 @@ else
                         <i class="fas fa-edit me-2"></i>
                         Modifier le produit
                     </h5>
-                    <button type="button" class="btn-close" @onclick="FermerEditModal"></button>
+                    <button type="button" class="btn-close" @onclick="ViewModel.FermerEditModal"></button>
                 </div>
                 <div class="modal-body">
-                    @if (!string.IsNullOrEmpty(errorMessageEdit))
+                    @if (!string.IsNullOrEmpty(ViewModel.ErrorMessageEdit))
                     {
                         <div class="alert alert-danger" role="alert">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            @errorMessageEdit
+                            @ViewModel.ErrorMessageEdit
                         </div>
                     }
 
-                    <EditForm Model="@produitAModifier" OnValidSubmit="@ConfirmerModification">
+                    <EditForm Model="@ViewModel.ProduitAModifier" OnValidSubmit="@ViewModel.ConfirmerModificationAsync">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="text-danger mb-3" />
 
@@ -357,54 +344,54 @@ else
                                         <label for="editNom" class="form-label fw-bold">
                                             Nom du produit <span class="text-danger">*</span>
                                         </label>
-                                        <InputText id="editNom" class="form-control" @bind-Value="produitAModifier.Nom" />
-                                        <ValidationMessage For="@(() => produitAModifier.Nom)" />
+                                        <InputText id="editNom" class="form-control" @bind-Value="ViewModel.ProduitAModifier.Nom" />
+                                        <ValidationMessage For="@(() => ViewModel.ProduitAModifier.Nom)" />
                                     </div>
 
                                     <div class="col-12">
                                         <label for="editMarque" class="form-label fw-bold">
                                             Marque <span class="text-danger">*</span>
                                         </label>
-                                        <select id="editMarque" class="form-select" @bind="produitAModifier.Marque">
+                                        <select id="editMarque" class="form-select" @bind="ViewModel.ProduitAModifier.Marque">
                                             <option value="">-- Sélectionnez une marque --</option>
-                                            @if (marquesDisponibles != null)
+                                            @if (ViewModel.MarquesDisponibles != null)
                                             {
-                                                @foreach (var marque in marquesDisponibles)
+                                                @foreach (var marque in ViewModel.MarquesDisponibles)
                                                 {
                                                     <option value="@marque.Nom">@marque.Nom</option>
                                                 }
                                             }
                                         </select>
-                                        <ValidationMessage For="@(() => produitAModifier.Marque)" />
+                                        <ValidationMessage For="@(() => ViewModel.ProduitAModifier.Marque)" />
                                     </div>
 
                                     <div class="col-12">
                                         <label for="editType" class="form-label fw-bold">
                                             Type de produit <span class="text-danger">*</span>
                                         </label>
-                                        <select id="editType" class="form-select" @bind="produitAModifier.Type">
+                                        <select id="editType" class="form-select" @bind="ViewModel.ProduitAModifier.Type">
                                             <option value="">-- Sélectionnez un type --</option>
-                                            @if (typesDisponibles != null)
+                                            @if (ViewModel.TypesDisponibles != null)
                                             {
-                                                @foreach (var type in typesDisponibles)
+                                                @foreach (var type in ViewModel.TypesDisponibles)
                                                 {
                                                     <option value="@type.Nom">@type.Nom</option>
                                                 }
                                             }
                                         </select>
-                                        <ValidationMessage For="@(() => produitAModifier.Type)" />
+                                        <ValidationMessage For="@(() => ViewModel.ProduitAModifier.Type)" />
                                     </div>
 
                                     <div class="col-12">
                                         <label for="editStock" class="form-label fw-bold">Stock actuel</label>
-                                        <InputNumber id="editStock" class="form-control" @bind-Value="produitAModifier.Stock" />
-                                        <ValidationMessage For="@(() => produitAModifier.Stock)" />
+                                        <InputNumber id="editStock" class="form-control" @bind-Value="ViewModel.ProduitAModifier.Stock" />
+                                        <ValidationMessage For="@(() => ViewModel.ProduitAModifier.Stock)" />
                                     </div>
 
                                     <div class="col-12">
                                         <label for="editDescription" class="form-label fw-bold">Description</label>
-                                        <InputTextArea id="editDescription" class="form-control" rows="3" @bind-Value="produitAModifier.Description" />
-                                        <ValidationMessage For="@(() => produitAModifier.Description)" />
+                                        <InputTextArea id="editDescription" class="form-control" rows="3" @bind-Value="ViewModel.ProduitAModifier.Description" />
+                                        <ValidationMessage For="@(() => ViewModel.ProduitAModifier.Description)" />
                                     </div>
                                 </div>
                             </div>
@@ -422,13 +409,13 @@ else
                                         <h6 class="card-title">Ajouter une image</h6>
                                         <div class="mb-2">
                                             <label for="editNomImage" class="form-label">Nom de l'image</label>
-                                            <input type="text" id="editNomImage" class="form-control" @bind="nouvelleImageNom" placeholder="Ex: Photo principale" />
+                                            <input type="text" id="editNomImage" class="form-control" @bind="ViewModel.NouvelleImageNom" placeholder="Ex: Photo principale" />
                                         </div>
                                         <div class="mb-2">
                                             <label for="editUrlImage" class="form-label">URL de l'image</label>
-                                            <input type="text" id="editUrlImage" class="form-control" @bind="nouvelleImageUrl" placeholder="https://..." />
+                                            <input type="text" id="editUrlImage" class="form-control" @bind="ViewModel.NouvelleImageUrl" placeholder="https://..." />
                                         </div>
-                                        <button type="button" class="btn btn-sm btn-success w-100" @onclick="AjouterImageTemporaire">
+                                        <button type="button" class="btn btn-sm btn-success w-100" @onclick="ViewModel.AjouterImageTemporaire">
                                             <i class="fas fa-plus me-1"></i>
                                             Ajouter l'image
                                         </button>
@@ -440,10 +427,10 @@ else
                                     <div class="card-body" style="max-height: 400px; overflow-y: auto;">
                                         <h6 class="card-title">Images du produit</h6>
 
-                                        @if (imagesModification.Any())
+                                        @if (ViewModel.ImagesModification.Any())
                                         {
                                             <div class="row g-2">
-                                                @foreach (var img in imagesModification)
+                                                @foreach (var img in ViewModel.ImagesModification)
                                                 {
                                                     <div class="col-12">
                                                         <div class="card">
@@ -464,7 +451,7 @@ else
                                                                             }
                                                                         </p>
                                                                         <small class="text-muted d-block text-truncate">@img.UrlPhoto</small>
-                                                                        <button type="button" class="btn btn-sm btn-danger mt-2" @onclick="() => SupprimerImageModification(img)">
+                                                                        <button type="button" class="btn btn-sm btn-danger mt-2" @onclick="() => ViewModel.SupprimerImageModification(img)">
                                                                             <i class="fas fa-trash me-1"></i>
                                                                             Supprimer
                                                                         </button>
@@ -486,9 +473,9 @@ else
                         </div>
 
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="FermerEditModal">Annuler</button>
-                            <button type="submit" class="btn btn-warning" disabled="@isSubmittingEdit">
-                                @if (isSubmittingEdit)
+                            <button type="button" class="btn btn-secondary" @onclick="ViewModel.FermerEditModal">Annuler</button>
+                            <button type="submit" class="btn btn-warning" disabled="@ViewModel.IsSubmittingEdit">
+                                @if (ViewModel.IsSubmittingEdit)
                                 {
                                     <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                                 }
@@ -496,7 +483,7 @@ else
                                 {
                                     <i class="fas fa-save me-2"></i>
                                 }
-                                @(isSubmittingEdit ? "Modification..." : "Sauvegarder")
+                                @(ViewModel.IsSubmittingEdit ? "Modification..." : "Sauvegarder")
                             </button>
                         </div>
                     </EditForm>
@@ -507,9 +494,9 @@ else
 }
 
 <!-- Modal de confirmation de suppression -->
-@if (showDeleteModal && produitASupprimer != null)
+@if (ViewModel.ShowDeleteModal && ViewModel.ProduitASupprimer != null)
 {
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @onclick="FermerDeleteModal">
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @onclick="ViewModel.FermerDeleteModal">
         <div class="modal-dialog" @onclick:stopPropagation="true">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
@@ -517,20 +504,20 @@ else
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         Confirmer la suppression
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="FermerDeleteModal"></button>
+                    <button type="button" class="btn-close btn-close-white" @onclick="ViewModel.FermerDeleteModal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="text-center">
                         <i class="fas fa-trash-alt fa-4x text-danger mb-3"></i>
                         <p class="lead">Êtes-vous sûr de vouloir supprimer le produit :</p>
-                        <p class="fw-bold fs-5 text-danger">"@nomProduitASupprimer"</p>
+                        <p class="fw-bold fs-5 text-danger">"@ViewModel.NomProduitASupprimer"</p>
                         <p class="text-muted">Cette action est irréversible.</p>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="FermerDeleteModal">Annuler</button>
-                    <button type="button" class="btn btn-danger" @onclick="ConfirmerSuppression" disabled="@isSubmittingDelete">
-                        @if (isSubmittingDelete)
+                    <button type="button" class="btn btn-secondary" @onclick="ViewModel.FermerDeleteModal">Annuler</button>
+                    <button type="button" class="btn btn-danger" @onclick="ViewModel.ConfirmerSuppressionAsync" disabled="@ViewModel.IsSubmittingDelete">
+                        @if (ViewModel.IsSubmittingDelete)
                         {
                             <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                         }
@@ -538,7 +525,7 @@ else
                         {
                             <i class="fas fa-trash me-2"></i>
                         }
-                        @(isSubmittingDelete ? "Suppression..." : "Supprimer définitivement")
+                        @(ViewModel.IsSubmittingDelete ? "Suppression..." : "Supprimer définitivement")
                     </button>
                 </div>
             </div>
@@ -579,381 +566,34 @@ else
         .carousel-indicators button.active {
             background-color: #fff;
         }
+
+    .reappro-ribbon {
+        position: absolute;
+        right: -5px;
+        top: -5px;
+        background-color: #dc3545;
+        color: white;
+        padding: 2px 8px;
+        font-size: 0.75rem;
+        border-radius: 3px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
 </style>
 
 @code {
-    // Listes de données
-    private IEnumerable<ProduitSimple>? produits;
-    private IEnumerable<ProduitSimple> produitsFiltres = new List<ProduitSimple>();
-    private Dictionary<int, List<Image>> imagesProduits = new Dictionary<int, List<Image>>();
-    private List<Marque>? marquesDisponibles;
-    private List<TypeProduit>? typesDisponibles;
-
-    // Variables de filtrage
-    private string searchNom = "";
-    private string selectedType = "";
-    private string SelectedType
-    {
-        get => selectedType;
-        set
-        {
-            selectedType = value;
-            _ = ApplyFilters();
-        }
-    }
-
-    private string selectedMarque = "";
-    private string SelectedMarque
-    {
-        get => selectedMarque;
-        set
-        {
-            selectedMarque = value;
-            _ = ApplyFilters();
-        }
-    }
-
-    // Variables pour les modals
-    private bool showDetailModal = false;
-    private bool showEditModal = false;
-    private bool showDeleteModal = false;
-
-    private Produit? produitSelectionne;
-    private Produit? produitAModifier;
-    private (int id, string nom)? produitASupprimer;
-    private string nomProduitASupprimer => produitASupprimer?.nom ?? "";
-
-    private string errorMessageEdit = "";
-    private bool isSubmittingEdit = false;
-    private bool isSubmittingDelete = false;
-
-    // Variables pour la gestion des images dans la modification
-    private List<Image> imagesModification = new List<Image>();
-    private List<Image> imagesASupprimer = new List<Image>();
-    private string nouvelleImageNom = "";
-    private string nouvelleImageUrl = "";
-
-    // Cast pour accéder aux méthodes spécifiques de ProduitService
-    private ProduitService ProduitService => (ProduitService)WSProduit;
-
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            await LoadFilteredProduits();
-            await ChargerDonneesReferences();
-            await LoadProductImages();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erreur lors du chargement : {ex.Message}");
-            NotificationService.ShowError($"Erreur lors du chargement : {ex.Message}");
-        }
+        await ViewModel.InitialiserAsync();
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
-    private async Task ApplyFilters()
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        await LoadFilteredProduits();
+        InvokeAsync(StateHasChanged);
     }
 
-    private async Task ChargerDonneesReferences()
+    public void Dispose()
     {
-        var marquesResponse = await WSMarque.GetAllAsync();
-        marquesDisponibles = marquesResponse?.ToList() ?? new List<Marque>();
-
-        var typesResponse = await WSTypeProduit.GetAllAsync();
-        typesDisponibles = typesResponse?.ToList() ?? new List<TypeProduit>();
-    }
-
-    private async Task LoadProductImages()
-    {
-        try
-        {
-            var allImages = await WSImage.GetAllAsync();
-            if (allImages != null && produitsFiltres != null)
-            {
-                imagesProduits = allImages
-                    .GroupBy(img => img.IdProduit)
-                    .ToDictionary(g => g.Key, g => g.ToList());
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erreur lors du chargement des images : {ex.Message}");
-            imagesProduits = new Dictionary<int, List<Image>>();
-        }
-    }
-
-    private async Task OnSearchChanged(ChangeEventArgs e)
-    {
-        searchNom = e.Value?.ToString() ?? "";
-        await LoadFilteredProduits();
-    }
-
-    private async Task LoadFilteredProduits()
-    {
-        try
-        {
-            produitsFiltres = await ProduitService.GetFilteredAsync(
-                searchTerm: string.IsNullOrEmpty(searchNom) ? null : searchNom,
-                marque: string.IsNullOrEmpty(selectedMarque) ? null : selectedMarque,
-                type: string.IsNullOrEmpty(selectedType) ? null : selectedType
-            );
-
-            produits = produitsFiltres;
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erreur LoadFilteredProduits: {ex.Message}");
-            produitsFiltres = new List<ProduitSimple>();
-        }
-    }
-
-    private async Task ClearFilters()
-    {
-        searchNom = "";
-        selectedType = "";
-        selectedMarque = "";
-
-        await LoadFilteredProduits();
-        await LoadProductImages();
-
-        StateHasChanged();
-    }
-
-
-    // Méthodes pour les modals de détails
-    private async Task VoirDetails(int produitId)
-    {
-        try
-        {
-            produitSelectionne = await WSProduit.GetByIdAsync(produitId);
-            Console.WriteLine($"Produit sélectionné pour détails : {produitSelectionne?.Nom}");
-            showDetailModal = true;
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erreur lors du chargement des détails : {ex.Message}");
-            NotificationService.ShowError($"Erreur lors du chargement des détails : {ex.Message}");
-        }
-    }
-
-    private void FermerDetailModal()
-    {
-        showDetailModal = false;
-        produitSelectionne = null;
-        StateHasChanged();
-    }
-
-    // Méthodes pour la modal de modification
-    private async Task ModifierProduit(int produitId)
-    {
-        try
-        {
-            FermerDetailModal();
-            produitAModifier = await WSProduit.GetByIdAsync(produitId);
-            errorMessageEdit = "";
-
-            // Charger les images existantes pour ce produit
-            if (imagesProduits.ContainsKey(produitId))
-            {
-                imagesModification = imagesProduits[produitId].Select(img => new Image
-                {
-                    IdImage = img.IdImage,
-                    NomImage = img.NomImage,
-                    UrlPhoto = img.UrlPhoto,
-                    IdProduit = img.IdProduit
-                }).ToList();
-            }
-            else
-            {
-                imagesModification = new List<Image>();
-            }
-
-            imagesASupprimer = new List<Image>();
-            nouvelleImageNom = "";
-            nouvelleImageUrl = "";
-
-            showEditModal = true;
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erreur lors du chargement pour modification : {ex.Message}");
-            errorMessageEdit = $"Erreur lors du chargement : {ex.Message}";
-            NotificationService.ShowError($"Erreur lors du chargement : {ex.Message}");
-        }
-    }
-
-    private void FermerEditModal()
-    {
-        showEditModal = false;
-        produitAModifier = null;
-        errorMessageEdit = "";
-        isSubmittingEdit = false;
-        imagesModification.Clear();
-        imagesASupprimer.Clear();
-        nouvelleImageNom = "";
-        nouvelleImageUrl = "";
-        StateHasChanged();
-    }
-
-    private void AjouterImageTemporaire()
-    {
-        if (string.IsNullOrWhiteSpace(nouvelleImageNom))
-        {
-            NotificationService.ShowWarning("Veuillez saisir un nom pour l'image");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(nouvelleImageUrl))
-        {
-            NotificationService.ShowWarning("Veuillez saisir une URL pour l'image");
-            return;
-        }
-
-        // Ajouter une nouvelle image temporaire (IdImage = 0 pour indiquer qu'elle n'existe pas encore en DB)
-        var nouvelleImage = new Image
-        {
-            IdImage = 0,
-            NomImage = nouvelleImageNom,
-            UrlPhoto = nouvelleImageUrl,
-            IdProduit = produitAModifier?.IdProduit ?? 0
-        };
-
-        imagesModification.Add(nouvelleImage);
-
-        // Réinitialiser les champs
-        nouvelleImageNom = "";
-        nouvelleImageUrl = "";
-
-        NotificationService.ShowSuccess("Image ajoutée à la liste");
-        StateHasChanged();
-    }
-
-    private void SupprimerImageModification(Image image)
-    {
-        // Si l'image existe déjà en DB (IdImage > 0), on l'ajoute à la liste de suppression
-        if (image.IdImage > 0)
-        {
-            imagesASupprimer.Add(image);
-        }
-
-        // Retirer l'image de la liste d'affichage
-        imagesModification.Remove(image);
-        NotificationService.ShowInfo("Image marquée pour suppression");
-        StateHasChanged();
-    }
-
-    private async Task ConfirmerModification()
-    {
-        isSubmittingEdit = true;
-        errorMessageEdit = "";
-
-        try
-        {
-            // 1. Mettre à jour le produit
-            await WSProduit.UpdateAsync(produitAModifier.Id, produitAModifier);
-
-            // 2. Supprimer les images marquées pour suppression
-            foreach (var imageASupprimer in imagesASupprimer)
-            {
-                try
-                {
-                    await WSImage.DeleteAsync(imageASupprimer.IdImage);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Erreur lors de la suppression de l'image {imageASupprimer.IdImage}: {ex.Message}");
-                }
-            }
-
-            // 3. Ajouter les nouvelles images (celles avec IdImage = 0)
-            var nouvellesImages = imagesModification.Where(img => img.IdImage == 0).ToList();
-            foreach (var nouvelleImage in nouvellesImages)
-            {
-                try
-                {
-                    nouvelleImage.IdProduit = produitAModifier.IdProduit;
-                    await WSImage.AddAsync(nouvelleImage);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Erreur lors de l'ajout de l'image {nouvelleImage.NomImage}: {ex.Message}");
-                }
-            }
-
-            // 4. Recharger les données
-            await OnInitializedAsync();
-
-            NotificationService.ShowSuccess($"Le produit '{produitAModifier.Nom}' a été modifié avec succès");
-            FermerEditModal();
-        }
-        catch (Exception ex)
-        {
-            errorMessageEdit = $"Erreur lors de la modification : {ex.Message}";
-            Console.WriteLine($"Erreur ConfirmerModification : {ex}");
-            NotificationService.ShowError($"Erreur lors de la modification : {ex.Message}");
-        }
-        finally
-        {
-            isSubmittingEdit = false;
-            StateHasChanged();
-        }
-    }
-
-    // Méthodes pour la modal de suppression
-    private void SupprimerProduit(int produitId, string nomProduit)
-    {
-        produitASupprimer = (produitId, nomProduit);
-        showDeleteModal = true;
-        StateHasChanged();
-    }
-
-    private void FermerDeleteModal()
-    {
-        showDeleteModal = false;
-        produitASupprimer = null;
-        isSubmittingDelete = false;
-        StateHasChanged();
-    }
-
-    private async Task ConfirmerSuppression()
-    {
-        if (produitASupprimer == null) return;
-
-        isSubmittingDelete = true;
-
-        try
-        {
-            // Supprimer les images associées
-            if (imagesProduits.TryGetValue(produitASupprimer.Value.id, out var images))
-            {
-                foreach (var image in images)
-                {
-                    await WSImage.DeleteAsync(image.Id);
-                }
-            }
-
-            // Supprimer le produit
-            await WSProduit.DeleteAsync(produitASupprimer.Value.id);
-
-            NotificationService.ShowSuccess($"Le produit '{produitASupprimer.Value.nom}' a été supprimé avec succès");
-
-            await OnInitializedAsync();
-            FermerDeleteModal();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Erreur lors de la suppression : {ex.Message}");
-            NotificationService.ShowError($"Erreur lors de la suppression : {ex.Message}");
-        }
-        finally
-        {
-            isSubmittingDelete = false;
-            StateHasChanged();
-        }
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
     }
 }

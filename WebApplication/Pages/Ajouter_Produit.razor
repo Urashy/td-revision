@@ -1,10 +1,7 @@
 ﻿@page "/produits/ajouter"
-@inject IGenericService<Produit> WSProduit
-@inject IGenericService<Marque> WSMarque
-@inject IGenericService<TypeProduit> WSTypeProduit
-@inject IGenericService<Image> WSImage
+@inject AjouterProduitViewModel ViewModel
 @inject NavigationManager Navigation
-@using WebApplication.Services
+@implements IDisposable
 
 <PageTitle>Ajouter un produit</PageTitle>
 
@@ -20,7 +17,7 @@
                 </div>
 
                 <!-- Modal pour ajouter une nouvelle marque -->
-                @if (showModalAjoutMarque)
+                @if (ViewModel.ShowModalMarque)
                 {
                     <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
                         <div class="modal-dialog">
@@ -30,14 +27,14 @@
                                         <i class="fas fa-plus-circle me-2"></i>
                                         Ajouter une nouvelle marque
                                     </h5>
-                                    <button type="button" class="btn-close" @onclick="FermerModalAjoutMarque"></button>
+                                    <button type="button" class="btn-close" @onclick="ViewModel.FermerModalMarque"></button>
                                 </div>
                                 <div class="modal-body">
-                                    @if (!string.IsNullOrEmpty(errorMessageMarque))
+                                    @if (!string.IsNullOrEmpty(ViewModel.ErrorMessageMarque))
                                     {
                                         <div class="alert alert-danger" role="alert">
                                             <i class="fas fa-exclamation-triangle me-2"></i>
-                                            @errorMessageMarque
+                                            @ViewModel.ErrorMessageMarque
                                         </div>
                                     }
 
@@ -46,17 +43,17 @@
                                             Nom de la marque <span class="text-danger">*</span>
                                         </label>
                                         <input type="text" id="nouvelleMarque" class="form-control"
-                                               @bind="nouvelleMarque.Nom"
+                                               @bind="ViewModel.NouvelleMarque.Nom"
                                                placeholder="Entrez le nom de la marque"
-                                               @onkeypress="@(async (e) => { if (e.Key == "Enter") await AjouterNouvelleMarque(); })" />
+                                               @onkeypress="@(async (e) => { if (e.Key == "Enter") await ViewModel.AjouterMarqueAsync(); })" />
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" @onclick="FermerModalAjoutMarque">
+                                    <button type="button" class="btn btn-secondary" @onclick="ViewModel.FermerModalMarque">
                                         Annuler
                                     </button>
-                                    <button type="button" class="btn btn-primary" @onclick="AjouterNouvelleMarque" disabled="@isSubmittingMarque">
-                                        @if (isSubmittingMarque)
+                                    <button type="button" class="btn btn-primary" @onclick="ViewModel.AjouterMarqueAsync" disabled="@ViewModel.IsSubmittingMarque">
+                                        @if (ViewModel.IsSubmittingMarque)
                                         {
                                             <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                                         }
@@ -64,7 +61,7 @@
                                         {
                                             <i class="fas fa-save me-2"></i>
                                         }
-                                        @(isSubmittingMarque ? "Ajout..." : "Ajouter")
+                                        @(ViewModel.IsSubmittingMarque ? "Ajout..." : "Ajouter")
                                     </button>
                                 </div>
                             </div>
@@ -73,7 +70,7 @@
                 }
 
                 <!-- Modal pour ajouter un nouveau type de produit -->
-                @if (showModalAjoutType)
+                @if (ViewModel.ShowModalType)
                 {
                     <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
                         <div class="modal-dialog">
@@ -83,14 +80,14 @@
                                         <i class="fas fa-plus-circle me-2"></i>
                                         Ajouter un nouveau type de produit
                                     </h5>
-                                    <button type="button" class="btn-close" @onclick="FermerModalAjoutType"></button>
+                                    <button type="button" class="btn-close" @onclick="ViewModel.FermerModalType"></button>
                                 </div>
                                 <div class="modal-body">
-                                    @if (!string.IsNullOrEmpty(errorMessageType))
+                                    @if (!string.IsNullOrEmpty(ViewModel.ErrorMessageType))
                                     {
                                         <div class="alert alert-danger" role="alert">
                                             <i class="fas fa-exclamation-triangle me-2"></i>
-                                            @errorMessageType
+                                            @ViewModel.ErrorMessageType
                                         </div>
                                     }
 
@@ -99,17 +96,17 @@
                                             Nom du type de produit <span class="text-danger">*</span>
                                         </label>
                                         <input type="text" id="nouveauType" class="form-control"
-                                               @bind="nouveauType.Nom"
+                                               @bind="ViewModel.NouveauType.Nom"
                                                placeholder="Entrez le nom du type"
-                                               @onkeypress="@(async (e) => { if (e.Key == "Enter") await AjouterNouveauType(); })" />
+                                               @onkeypress="@(async (e) => { if (e.Key == "Enter") await ViewModel.AjouterTypeAsync(); })" />
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" @onclick="FermerModalAjoutType">
+                                    <button type="button" class="btn btn-secondary" @onclick="ViewModel.FermerModalType">
                                         Annuler
                                     </button>
-                                    <button type="button" class="btn btn-primary" @onclick="AjouterNouveauType" disabled="@isSubmittingType">
-                                        @if (isSubmittingType)
+                                    <button type="button" class="btn btn-primary" @onclick="ViewModel.AjouterTypeAsync" disabled="@ViewModel.IsSubmittingType">
+                                        @if (ViewModel.IsSubmittingType)
                                         {
                                             <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                                         }
@@ -117,31 +114,32 @@
                                         {
                                             <i class="fas fa-save me-2"></i>
                                         }
-                                        @(isSubmittingType ? "Ajout..." : "Ajouter")
+                                        @(ViewModel.IsSubmittingType ? "Ajout..." : "Ajouter")
                                     </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 }
+
                 <div class="card-body">
-                    @if (!string.IsNullOrEmpty(errorMessage))
+                    @if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
                     {
                         <div class="alert alert-danger" role="alert">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            @errorMessage
+                            @ViewModel.ErrorMessage
                         </div>
                     }
 
-                    @if (!string.IsNullOrEmpty(successMessage))
+                    @if (!string.IsNullOrEmpty(ViewModel.SuccessMessage))
                     {
                         <div class="alert alert-success" role="alert">
                             <i class="fas fa-check-circle me-2"></i>
-                            @successMessage
+                            @ViewModel.SuccessMessage
                         </div>
                     }
 
-                    <EditForm Model="@nouveauProduit" OnValidSubmit="@AjouterProduit">
+                    <EditForm Model="@ViewModel.Produit" OnValidSubmit="@SoumettreFormulaire">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="text-danger mb-3" />
 
@@ -151,8 +149,8 @@
                                 <label for="nom" class="form-label">
                                     Nom du produit <span class="text-danger">*</span>
                                 </label>
-                                <InputText id="nom" class="form-control" @bind-Value="nouveauProduit.Nom" placeholder="Entrez le nom du produit" />
-                                <ValidationMessage For="@(() => nouveauProduit.Nom)" />
+                                <InputText id="nom" class="form-control" @bind-Value="ViewModel.Produit.Nom" placeholder="Entrez le nom du produit" />
+                                <ValidationMessage For="@(() => ViewModel.Produit.Nom)" />
                             </div>
                         </div>
 
@@ -164,21 +162,21 @@
                                         Marque <span class="text-danger">*</span>
                                     </label>
                                     <button type="button" class="btn btn-sm btn-outline-primary"
-                                            @onclick="() => OuvrirModalAjoutMarque()">
+                                            @onclick="ViewModel.OuvrirModalMarque">
                                         <i class="fas fa-plus"></i> Nouvelle marque
                                     </button>
                                 </div>
-                                <select id="marque" class="form-select" @bind="nouveauProduit.Marque">
+                                <select id="marque" class="form-select" @bind="ViewModel.Produit.Marque">
                                     <option value="">-- Sélectionnez une marque --</option>
-                                    @if (marquesDisponibles != null)
+                                    @if (ViewModel.MarquesDisponibles != null)
                                     {
-                                        @foreach (var marque in marquesDisponibles)
+                                        @foreach (var marque in ViewModel.MarquesDisponibles)
                                         {
                                             <option value="@marque.Nom">@marque.Nom</option>
                                         }
                                     }
                                 </select>
-                                <ValidationMessage For="@(() => nouveauProduit.Marque)" />
+                                <ValidationMessage For="@(() => ViewModel.Produit.Marque)" />
                             </div>
 
                             <!-- Type de produit -->
@@ -188,21 +186,21 @@
                                         Type de produit <span class="text-danger">*</span>
                                     </label>
                                     <button type="button" class="btn btn-sm btn-outline-primary"
-                                            @onclick="() => OuvrirModalAjoutType()">
+                                            @onclick="ViewModel.OuvrirModalType">
                                         <i class="fas fa-plus"></i> Nouveau type
                                     </button>
                                 </div>
-                                <select id="type" class="form-select" @bind="nouveauProduit.Type">
+                                <select id="type" class="form-select" @bind="ViewModel.Produit.Type">
                                     <option value="">-- Sélectionnez un type --</option>
-                                    @if (typesDisponibles != null)
+                                    @if (ViewModel.TypesDisponibles != null)
                                     {
-                                        @foreach (var type in typesDisponibles)
+                                        @foreach (var type in ViewModel.TypesDisponibles)
                                         {
                                             <option value="@type.Nom">@type.Nom</option>
                                         }
                                     }
                                 </select>
-                                <ValidationMessage For="@(() => nouveauProduit.Type)" />
+                                <ValidationMessage For="@(() => ViewModel.Produit.Type)" />
                             </div>
                         </div>
 
@@ -220,8 +218,8 @@
                                             Stock initial
                                             <i class="fas fa-info-circle text-muted" title="Quantité actuelle en stock"></i>
                                         </label>
-                                        <InputNumber id="stock" class="form-control" @bind-Value="nouveauProduit.Stock" placeholder="0" />
-                                        <ValidationMessage For="@(() => nouveauProduit.Stock)" />
+                                        <InputNumber id="stock" class="form-control" @bind-Value="ViewModel.Produit.Stock" placeholder="0" />
+                                        <ValidationMessage For="@(() => ViewModel.Produit.Stock)" />
                                     </div>
 
                                     <!-- Stock minimum -->
@@ -230,7 +228,7 @@
                                             Stock minimum
                                             <i class="fas fa-info-circle text-muted" title="Seuil d'alerte pour réapprovisionnement"></i>
                                         </label>
-                                        <InputNumber id="stockMin" class="form-control" @bind-Value="stockMin" placeholder="0" />
+                                        <InputNumber id="stockMin" class="form-control" @bind-Value="ViewModel.StockMin" placeholder="0" />
                                         <small class="form-text text-muted">Seuil de réapprovisionnement</small>
                                     </div>
 
@@ -240,12 +238,12 @@
                                             Stock maximum
                                             <i class="fas fa-info-circle text-muted" title="Capacité maximale de stockage"></i>
                                         </label>
-                                        <InputNumber id="stockMax" class="form-control" @bind-Value="stockMax" placeholder="100" />
+                                        <InputNumber id="stockMax" class="form-control" @bind-Value="ViewModel.StockMax" placeholder="100" />
                                         <small class="form-text text-muted">Capacité maximale</small>
                                     </div>
                                 </div>
 
-                                @if (stockMin.HasValue && nouveauProduit.Stock.HasValue && nouveauProduit.Stock.Value < stockMin.Value)
+                                @if (ViewModel.AfficherAlerteStockMin)
                                 {
                                     <div class="alert alert-warning d-flex align-items-center" role="alert">
                                         <i class="fas fa-exclamation-triangle me-2"></i>
@@ -253,7 +251,7 @@
                                     </div>
                                 }
 
-                                @if (stockMax.HasValue && nouveauProduit.Stock.HasValue && nouveauProduit.Stock.Value > stockMax.Value)
+                                @if (ViewModel.AfficherAlerteStockMax)
                                 {
                                     <div class="alert alert-danger d-flex align-items-center" role="alert">
                                         <i class="fas fa-times-circle me-2"></i>
@@ -267,9 +265,9 @@
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
                             <InputTextArea id="description" class="form-control" rows="4"
-                                           @bind-Value="nouveauProduit.Description"
+                                           @bind-Value="ViewModel.Produit.Description"
                                            placeholder="Décrivez le produit..." />
-                            <ValidationMessage For="@(() => nouveauProduit.Description)" />
+                            <ValidationMessage For="@(() => ViewModel.Produit.Description)" />
                         </div>
 
                         <!-- Section Images -->
@@ -280,20 +278,20 @@
                             </h5>
 
                             <!-- Liste des images ajoutées -->
-                            @if (imagesAAjouter.Any())
+                            @if (ViewModel.Images.Any())
                             {
                                 <div class="row mb-3">
-                                    @for (int i = 0; i < imagesAAjouter.Count; i++)
+                                    @for (int i = 0; i < ViewModel.Images.Count; i++)
                                     {
                                         var index = i;
-                                        var image = imagesAAjouter[index];
+                                        var image = ViewModel.Images[index];
                                         <div class="col-md-4 mb-2">
                                             <div class="card">
                                                 <div class="card-body p-2">
                                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                                         <small class="text-muted">Image @(index + 1)</small>
                                                         <button type="button" class="btn btn-sm btn-outline-danger"
-                                                                @onclick="() => SupprimerImage(index)">
+                                                                @onclick="() => ViewModel.SupprimerImage(index)">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </div>
@@ -324,7 +322,7 @@
                             }
 
                             <!-- Bouton ajouter image -->
-                            <button type="button" class="btn btn-outline-secondary" @onclick="AjouterNouvelleImage">
+                            <button type="button" class="btn btn-outline-secondary" @onclick="ViewModel.AjouterImage">
                                 <i class="fas fa-plus me-2"></i>
                                 Ajouter une image
                             </button>
@@ -336,8 +334,8 @@
                                 <i class="fas fa-times me-2"></i>
                                 Annuler
                             </button>
-                            <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
-                                @if (isSubmitting)
+                            <button type="submit" class="btn btn-primary" disabled="@ViewModel.IsSubmitting">
+                                @if (ViewModel.IsSubmitting)
                                 {
                                     <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                                 }
@@ -345,7 +343,7 @@
                                 {
                                     <i class="fas fa-save me-2"></i>
                                 }
-                                @(isSubmitting ? "Ajout en cours..." : "Ajouter le produit")
+                                @(ViewModel.IsSubmitting ? "Ajout en cours..." : "Ajouter le produit")
                             </button>
                         </div>
                     </EditForm>
@@ -356,292 +354,34 @@
 </div>
 
 @code {
-    private Produit nouveauProduit = new Produit();
-    private List<Image> imagesAAjouter = new List<Image>();
-
-    private int? stockMin = 0;
-    private int? stockMax = 100;
-
-    private List<Marque>? marquesDisponibles;
-    private List<TypeProduit>? typesDisponibles;
-
-    private string errorMessage = "";
-    private string successMessage = "";
-    private bool isSubmitting = false;
-
-    // Variables pour les modals d'ajout de marque et type
-    private bool showModalAjoutMarque = false;
-    private bool showModalAjoutType = false;
-    private Marque nouvelleMarque = new Marque();
-    private TypeProduit nouveauType = new TypeProduit();
-    private string errorMessageMarque = "";
-    private string errorMessageType = "";
-    private bool isSubmittingMarque = false;
-    private bool isSubmittingType = false;
-
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            await ChargerDonneesReferences();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Erreur lors du chargement des données : {ex.Message}";
-            Console.WriteLine($"Erreur OnInitializedAsync : {ex}");
-        }
+        await ViewModel.InitialiserAsync();
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
-    private async Task ChargerDonneesReferences()
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        var marquesResponse = await WSMarque.GetAllAsync();
-        marquesDisponibles = marquesResponse?.ToList() ?? new List<Marque>();
-
-        var typesResponse = await WSTypeProduit.GetAllAsync();
-        typesDisponibles = typesResponse?.ToList() ?? new List<TypeProduit>();
-
-        Console.WriteLine($"Marques chargées : {marquesDisponibles.Count}");
-        Console.WriteLine($"Types chargés : {typesDisponibles.Count}");
+        InvokeAsync(StateHasChanged);
     }
 
-    #region Gestion des modals
-
-    private void OuvrirModalAjoutMarque()
+    private async Task SoumettreFormulaire()
     {
-        nouvelleMarque = new Marque();
-        errorMessageMarque = "";
-        showModalAjoutMarque = true;
-        StateHasChanged();
-    }
-
-    private void FermerModalAjoutMarque()
-    {
-        showModalAjoutMarque = false;
-        nouvelleMarque = new Marque();
-        errorMessageMarque = "";
-        isSubmittingMarque = false;
-        StateHasChanged();
-    }
-
-    private void OuvrirModalAjoutType()
-    {
-        nouveauType = new TypeProduit();
-        errorMessageType = "";
-        showModalAjoutType = true;
-        StateHasChanged();
-    }
-
-    private void FermerModalAjoutType()
-    {
-        showModalAjoutType = false;
-        nouveauType = new TypeProduit();
-        errorMessageType = "";
-        isSubmittingType = false;
-        StateHasChanged();
-    }
-
-    private async Task AjouterNouvelleMarque()
-    {
-        isSubmittingMarque = true;
-        errorMessageMarque = "";
-
-        try
+        var success = await ViewModel.AjouterProduitAsync();
+        if (success)
         {
-            if (string.IsNullOrWhiteSpace(nouvelleMarque.Nom))
-            {
-                errorMessageMarque = "Le nom de la marque est obligatoire.";
-                return;
-            }
-
-            if (marquesDisponibles?.Any(m => m.Nom?.Equals(nouvelleMarque.Nom, StringComparison.OrdinalIgnoreCase) == true) == true)
-            {
-                errorMessageMarque = "Cette marque existe déjà.";
-                return;
-            }
-
-            Console.WriteLine($"Ajout de la marque : {nouvelleMarque.Nom}");
-
-            await WSMarque.AddAsync(nouvelleMarque);
-            await ChargerDonneesReferences();
-
-            nouveauProduit.Marque = nouvelleMarque.Nom;
-            FermerModalAjoutMarque();
-
-            Console.WriteLine("Marque ajoutée avec succès");
-        }
-        catch (Exception ex)
-        {
-            errorMessageMarque = $"Erreur lors de l'ajout de la marque : {ex.Message}";
-            Console.WriteLine($"Erreur AjouterNouvelleMarque : {ex}");
-        }
-        finally
-        {
-            isSubmittingMarque = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task AjouterNouveauType()
-    {
-        isSubmittingType = true;
-        errorMessageType = "";
-
-        try
-        {
-            if (string.IsNullOrWhiteSpace(nouveauType.Nom))
-            {
-                errorMessageType = "Le nom du type de produit est obligatoire.";
-                return;
-            }
-
-            if (typesDisponibles?.Any(t => t.Nom?.Equals(nouveauType.Nom, StringComparison.OrdinalIgnoreCase) == true) == true)
-            {
-                errorMessageType = "Ce type de produit existe déjà.";
-                return;
-            }
-
-            Console.WriteLine($"Ajout du type : {nouveauType.Nom}");
-
-            await WSTypeProduit.AddAsync(nouveauType);
-            await ChargerDonneesReferences();
-
-            nouveauProduit.Type = nouveauType.Nom;
-            FermerModalAjoutType();
-
-            Console.WriteLine("Type ajouté avec succès");
-        }
-        catch (Exception ex)
-        {
-            errorMessageType = $"Erreur lors de l'ajout du type : {ex.Message}";
-            Console.WriteLine($"Erreur AjouterNouveauType : {ex}");
-        }
-        finally
-        {
-            isSubmittingType = false;
-            StateHasChanged();
-        }
-    }
-
-    #endregion
-
-    private void AjouterNouvelleImage()
-    {
-        imagesAAjouter.Add(new Image
-        {
-            NomImage = "",
-            UrlPhoto = "",
-            IdProduit = 0
-        });
-        StateHasChanged();
-    }
-
-    private void SupprimerImage(int index)
-    {
-        if (index >= 0 && index < imagesAAjouter.Count)
-        {
-            imagesAAjouter.RemoveAt(index);
-            StateHasChanged();
-        }
-    }
-
-    private async Task AjouterProduit()
-    {
-        isSubmitting = true;
-        errorMessage = "";
-        successMessage = "";
-
-        try
-        {
-            if (string.IsNullOrWhiteSpace(nouveauProduit.Nom))
-            {
-                errorMessage = "Le nom du produit est obligatoire.";
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(nouveauProduit.Marque))
-            {
-                errorMessage = "La marque est obligatoire.";
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(nouveauProduit.Type))
-            {
-                errorMessage = "Le type de produit est obligatoire.";
-                return;
-            }
-
-            // Validation des stocks
-            if (stockMax.HasValue && nouveauProduit.Stock.HasValue && nouveauProduit.Stock.Value > stockMax.Value)
-            {
-                errorMessage = "Le stock initial ne peut pas dépasser le stock maximum.";
-                return;
-            }
-
-            if (stockMin.HasValue && stockMax.HasValue && stockMin.Value > stockMax.Value)
-            {
-                errorMessage = "Le stock minimum ne peut pas être supérieur au stock maximum.";
-                return;
-            }
-
-
-            Console.WriteLine($"Tentative d'ajout du produit : {nouveauProduit.Nom}");
-            Console.WriteLine($"Tentative d'ajout du produit : {nouveauProduit.StockMaxi}");
-            Console.WriteLine($"Tentative d'ajout du produit : {nouveauProduit.StockMini}");
-
-            nouveauProduit.StockMini = stockMin;
-            nouveauProduit.StockMaxi = stockMax;
-
-
-            await WSProduit.AddAsync(nouveauProduit);
-
-
-
-            Console.WriteLine("Produit ajouté avec succès");
-
-            var produitCree = await WSProduit.GetByNameAsync(nouveauProduit.Nom);
-
-            if (produitCree != null)
-            {
-                Console.WriteLine($"Produit créé avec ID : {produitCree.Id}");
-
-                foreach (var image in imagesAAjouter.Where(img => !string.IsNullOrEmpty(img.NomImage) && !string.IsNullOrEmpty(img.UrlPhoto)))
-                {
-                    try
-                    {
-                        image.IdProduit = produitCree.Id;
-                        await WSImage.AddAsync(image);
-                        Console.WriteLine($"Image ajoutée : {image.NomImage}");
-                    }
-                    catch (Exception imgEx)
-                    {
-                        Console.WriteLine($"Erreur lors de l'ajout de l'image {image.NomImage} : {imgEx.Message}");
-                    }
-                }
-
-                successMessage = $"Le produit '{nouveauProduit.Nom}' a été ajouté avec succès !";
-
-                await Task.Delay(2000);
-                Navigation.NavigateTo("/produits");
-            }
-            else
-            {
-                errorMessage = "Le produit a été créé mais impossible de récupérer son ID pour ajouter les images.";
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Erreur lors de l'ajout du produit : {ex.Message}";
-            Console.WriteLine($"Erreur AjouterProduit : {ex}");
-        }
-        finally
-        {
-            isSubmitting = false;
-            StateHasChanged();
+            await Task.Delay(2000);
+            Navigation.NavigateTo("/produits");
         }
     }
 
     private void Annuler()
     {
         Navigation.NavigateTo("/produits");
+    }
+
+    public void Dispose()
+    {
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
     }
 }
